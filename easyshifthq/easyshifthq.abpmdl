@@ -1,0 +1,105 @@
+{
+  "template": "app",
+  "imports": {
+    "Volo.Abp.LeptonXLiteTheme": {
+      "version": "4.1.0",
+      "isInstalled": true
+    },
+    "Volo.Abp.Account": {
+      "version": "9.1.0",
+      "isInstalled": true
+    },
+    "Volo.Abp.OpenIddict": {
+      "version": "9.1.0",
+      "isInstalled": true
+    },
+    "Volo.Abp.Identity": {
+      "version": "9.1.0",
+      "isInstalled": true
+    },
+    "Volo.Abp.TenantManagement": {
+      "version": "9.1.0",
+      "isInstalled": true
+    },
+    "Volo.Abp.SettingManagement": {
+      "version": "9.1.0",
+      "isInstalled": true
+    },
+    "Volo.Abp.PermissionManagement": {
+      "version": "9.1.0",
+      "isInstalled": true
+    },
+    "Volo.Abp.FeatureManagement": {
+      "version": "9.1.0",
+      "isInstalled": true
+    }
+  },
+  "folders": {
+    "items": {
+      "src": {},
+      "test": {}
+    }
+  },
+  "packages": {
+    "easyshifthq.Application": {
+      "path": "src/easyshifthq.Application/easyshifthq.Application.abppkg",
+      "folder": "src"
+    },
+    "easyshifthq.Application.Tests": {
+      "path": "test/easyshifthq.Application.Tests/easyshifthq.Application.Tests.abppkg",
+      "folder": "test"
+    },
+    "easyshifthq.Domain.Shared": {
+      "path": "src/easyshifthq.Domain.Shared/easyshifthq.Domain.Shared.abppkg",
+      "folder": "src"
+    },
+    "easyshifthq.Application.Contracts": {
+      "path": "src/easyshifthq.Application.Contracts/easyshifthq.Application.Contracts.abppkg",
+      "folder": "src"
+    },
+    "easyshifthq.HttpApi": {
+      "path": "src/easyshifthq.HttpApi/easyshifthq.HttpApi.abppkg",
+      "folder": "src"
+    },
+    "easyshifthq.HttpApi.Client": {
+      "path": "src/easyshifthq.HttpApi.Client/easyshifthq.HttpApi.Client.abppkg",
+      "folder": "src"
+    },
+    "easyshifthq.Web": {
+      "path": "src/easyshifthq.Web/easyshifthq.Web.abppkg",
+      "folder": "src"
+    },
+    "easyshifthq.Web.Tests": {
+      "path": "test/easyshifthq.Web.Tests/easyshifthq.Web.Tests.abppkg",
+      "folder": "test"
+    },
+    "easyshifthq.EntityFrameworkCore.Tests": {
+      "path": "test/easyshifthq.EntityFrameworkCore.Tests/easyshifthq.EntityFrameworkCore.Tests.abppkg",
+      "folder": "test"
+    },
+    "easyshifthq.EntityFrameworkCore": {
+      "path": "src/easyshifthq.EntityFrameworkCore/easyshifthq.EntityFrameworkCore.abppkg",
+      "folder": "src"
+    },
+    "easyshifthq.TestBase": {
+      "path": "test/easyshifthq.TestBase/easyshifthq.TestBase.abppkg",
+      "folder": "test"
+    },
+    "easyshifthq.Domain.Tests": {
+      "path": "test/easyshifthq.Domain.Tests/easyshifthq.Domain.Tests.abppkg",
+      "folder": "test"
+    },
+    "easyshifthq.HttpApi.Client.ConsoleTestApp": {
+      "path": "test/easyshifthq.HttpApi.Client.ConsoleTestApp/easyshifthq.HttpApi.Client.ConsoleTestApp.abppkg",
+      "folder": "test"
+    },
+    "easyshifthq.DbMigrator": {
+      "path": "src/easyshifthq.DbMigrator/easyshifthq.DbMigrator.abppkg",
+      "folder": "src"
+    },
+    "easyshifthq.Domain": {
+      "path": "src/easyshifthq.Domain/easyshifthq.Domain.abppkg",
+      "folder": "src"
+    }
+  }
+}

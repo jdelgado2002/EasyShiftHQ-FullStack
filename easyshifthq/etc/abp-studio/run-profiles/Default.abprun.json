@@ -1,0 +1,15 @@
+﻿{
+  "applications": {
+    "easyshifthq.Web": {
+      "type": "dotnet-project",
+      "launchUrl": "https://localhost:44387",
+      "path": "../../../src/easyshifthq.Web/easyshifthq.Web.csproj",
+      "kubernetesService": ".*-web$",
+      "healthCheckEndpoint": "/health-status",
+      "healthUiEndpoint": "/health-ui",
+      "execution": {
+        "order": 2
+      }
+    }
+  }
+}
