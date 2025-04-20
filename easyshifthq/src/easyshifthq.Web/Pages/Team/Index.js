@@ -57,7 +57,7 @@ $(function () {
                                     return data.status === 'Pending';
                                 },
                                 confirmMessage: function (data) {
-                                    return l('InvitationRevocationConfirmation', data.email);
+                                    return l('InvitationRevocationConfirmMessage', data.email);
                                 },
                                 action: function (data) {
                                     easyshifthq.invitations.invitation

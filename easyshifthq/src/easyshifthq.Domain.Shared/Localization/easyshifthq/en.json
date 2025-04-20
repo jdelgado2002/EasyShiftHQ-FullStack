@@ -37,7 +37,6 @@
     "Location": "Location",
     "BulkInviteDescription": "Upload a CSV file containing team member information. Download the template below for the correct format.",
     "DownloadTemplate": "Download Template",
-    "InvitationRevocationConfirmation": "Are you sure you want to revoke the invitation for {0}?",
     "Permission:TeamManagement": "Team Management",
     "Permission:TeamManagement.Create": "Create Team Members",
     "Permission:TeamManagement.Edit": "Edit Team Members",

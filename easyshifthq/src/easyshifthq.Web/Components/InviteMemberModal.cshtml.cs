@@ -43,9 +43,9 @@ public class InviteMemberModalModel : easyshifthqPageModel
     {
         Roles = new List<SelectListItem>
         {
-            new SelectListItem("Admin", "admin"),
-            new SelectListItem("Manager", "manager"),
-            new SelectListItem("Employee", "employee")
+            new SelectListItem("Admin", "Admin"),
+            new SelectListItem("Manager", "Manager"),
+            new SelectListItem("Employee", "Employee")
         };
 
         var locations = await _locationAppService.GetActiveLocationsAsync();
