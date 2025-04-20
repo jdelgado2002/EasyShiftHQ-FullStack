@@ -38,13 +38,35 @@
     </abp-modal>
 </form>
 
+<!-- Add a span for displaying the selected file name -->
+<div class="mb-3">
+    <label class="form-label" for="csvFile">@L["SelectCSVFile"]</label>
+    <input
+        type="file"
+        class="form-control"
+        id="csvFile"
+        name="csvFile"
+        accept=".csv"
+        required
+    />
+    <span id="selectedFileName" class="mt-1 d-block"></span>
+</div>
+
 @section scripts {
     <script>
         $(function () {
             $('#csvFile').on('change', function() {
                 var fileName = $(this).val().split('\\').pop();
-                $(this).next('.custom-file-label').html(fileName);
+
+                // Option 1: If you're using Bootstrap 5's file input
+                $(this)
+                  .next('.form-label')
+                  .html(fileName || '@L["SelectCSVFile"]');
+
+                // Option 2: Or display it in the new span
+                $('#selectedFileName').text(fileName || '');
             });
         });
     </script>
+}
 }
