@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using easyshifthq.Invitations;
 using CsvHelper;
+using CsvHelper.Configuration;
 using System.Globalization;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc.UI.RazorPages;
@@ -60,20 +61,48 @@ public class BulkCreateModalModel : easyshifthqPageModel
             }
 
             var invitations = new List<CreateInvitationDto>();
+            var processedEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                PrepareHeaderForMatch = args => args.Header.ToLower(),
+                HeaderValidated = null,
+                MissingFieldFound = null,
+                BadDataFound = null,
+                IgnoreBlankLines = true,
+                TrimOptions = TrimOptions.Trim,
+                Delimiter = ","
+            };
 
             using (var reader = new StreamReader(CsvFile.OpenReadStream()))
-            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+            using (var csv = new CsvReader(reader, config))
             {
                 var records = csv.GetRecords<CsvInvitationRecord>();
                 
                 foreach (var record in records)
                 {
+                    if (string.IsNullOrWhiteSpace(record.Email))
+                    {
+                        throw new UserFriendlyException(L["EmailIsRequired"]);
+                    }
+
+                    var email = record.Email.Trim().ToLowerInvariant();
+                    if (!new EmailAddressAttribute().IsValid(email))
+                    {
+                        throw new UserFriendlyException(L["InvalidEmailFormat", email]);
+                    }
+
+                    if (!processedEmails.Add(email))
+                    {
+                        throw new UserFriendlyException(L["DuplicateEmail", email]);
+                    }
+
                     invitations.Add(new CreateInvitationDto
                     {
-                        Email = record.Email,
-                        FirstName = record.FirstName,
-                        LastName = record.LastName,
-                        Role = !string.IsNullOrEmpty(record.Role) ? record.Role : DefaultRole,
+                        Email = email,
+                        FirstName = record.FirstName?.Trim() ?? string.Empty,
+                        LastName = record.LastName?.Trim() ?? string.Empty,
+                        Role = !string.IsNullOrEmpty(record.Role) ? record.Role.Trim() : DefaultRole,
                         LocationId = DefaultLocationId
                     });
                 }
