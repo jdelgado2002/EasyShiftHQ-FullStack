@@ -1,0 +1,23 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using easyshifthq.Localization
+@model easyshifthq.Web.Pages.Invitations.CreateModalModel
+@inject IHtmlLocalizer<easyshifthqResource> L
+@{
+    Layout = null;
+}
+
+<form asp-page="/Invitations/CreateModal">
+    <abp-modal>
+        <abp-modal-header title="@L["NewInvite"].Value"></abp-modal-header>
+        <abp-modal-body>
+            <abp-input asp-for="Invitation.Email" />
+            <abp-input asp-for="Invitation.FirstName" />
+            <abp-input asp-for="Invitation.LastName" />
+            <abp-select asp-for="Invitation.Role" asp-items="Model.Roles" />
+            <abp-select asp-for="Invitation.LocationId" asp-items="Model.Locations" />
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel|AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>

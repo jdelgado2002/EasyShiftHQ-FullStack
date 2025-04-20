@@ -42,17 +42,27 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
 
         // Generate secure token
         var token = Guid.NewGuid().ToString("N");
-        var tokenHash = _passwordHasher.HashPassword(null, token);
-
-        var invitation = new Invitation(
+        var tempInvitation = new Invitation(
             GuidGenerator.Create(),
             input.Email,
             input.FirstName,
             input.LastName,
             input.Role,
             input.LocationId,
-            tokenHash,
+            string.Empty,
             CurrentTenant.Id
+        );
+        var tokenHash = _passwordHasher.HashPassword(tempInvitation, token);
+
+        var invitation = new Invitation(
+            tempInvitation.Id,
+            tempInvitation.Email,
+            tempInvitation.FirstName,
+            tempInvitation.LastName,
+            tempInvitation.Role,
+            tempInvitation.LocationId,
+            tokenHash,
+            tempInvitation.TenantId
         );
 
         await _invitationRepository.InsertAsync(invitation);
@@ -111,10 +121,10 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
         
         // Generate new token
         var token = Guid.NewGuid().ToString("N");
-        var tokenHash = _passwordHasher.HashPassword(null, token);
+        var tokenHash = _passwordHasher.HashPassword(invitation, token);
 
         // Update invitation with new token
-        invitation.TokenHash = tokenHash;
+        invitation.SetTokenHash(tokenHash);
         await _invitationRepository.UpdateAsync(invitation);
 
         await SendInvitationEmailAsync(invitation, token);

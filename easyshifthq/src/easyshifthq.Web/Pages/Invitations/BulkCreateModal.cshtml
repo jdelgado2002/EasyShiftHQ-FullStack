@@ -1,0 +1,50 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using easyshifthq.Localization
+@model easyshifthq.Web.Pages.Invitations.BulkCreateModalModel
+@inject IHtmlLocalizer<easyshifthqResource> L
+@{
+    Layout = null;
+}
+
+<form asp-page="/Invitations/BulkCreateModal" enctype="multipart/form-data">
+    <abp-modal>
+        <abp-modal-header title="@L["BulkInvite"].Value"></abp-modal-header>
+        <abp-modal-body>
+            <div class="mb-3">
+                <p>@L["BulkInviteInstructions"]</p>
+                <p><small class="text-muted">@L["BulkInviteFormat"]: Email, FirstName (optional), LastName (optional), Role (optional)</small></p>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label" for="csvFile">@L["SelectCSVFile"]</label>
+                <input type="file" class="form-control" id="csvFile" name="csvFile" accept=".csv" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">@L["DefaultRole"]</label>
+                <abp-select asp-for="DefaultRole" asp-items="Model.Roles" />
+                <small class="text-muted">@L["DefaultRoleHint"]</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">@L["DefaultLocation"]</label>
+                <abp-select asp-for="DefaultLocationId" asp-items="Model.Locations" />
+                <small class="text-muted">@L["DefaultLocationHint"]</small>
+            </div>
+        </abp-modal-body>
+        <abp-modal-footer buttons="@(AbpModalButtons.Cancel|AbpModalButtons.Save)"></abp-modal-footer>
+    </abp-modal>
+</form>
+
+@section scripts {
+    <script>
+        $(function () {
+            $('#csvFile').on('change', function() {
+                var fileName = $(this).val().split('\\').pop();
+                $(this).next('.custom-file-label').html(fileName);
+            });
+        });
+    </script>
+}

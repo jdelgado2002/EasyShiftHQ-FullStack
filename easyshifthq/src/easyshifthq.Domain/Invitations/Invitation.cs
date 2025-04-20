@@ -54,4 +54,21 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
     {
         return DateTime.UtcNow > ExpiresAt;
     }
+
+    public void SetTokenHash(string tokenHash)
+    {
+        TokenHash = tokenHash;
+    }
+    public void SetExpiresAt(DateTime expiresAt)
+    {
+        ExpiresAt = expiresAt;
+    }
+    public void SetLocationId(Guid? locationId)
+    {
+        LocationId = locationId;
+    }
+    public void SetStatus(InvitationStatus status)
+    {
+        Status = status;
+    }
 }

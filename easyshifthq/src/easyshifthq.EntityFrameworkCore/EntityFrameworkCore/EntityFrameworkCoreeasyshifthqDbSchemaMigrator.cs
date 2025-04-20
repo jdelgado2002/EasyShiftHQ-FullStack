@@ -26,7 +26,7 @@ public class EntityFrameworkCoreeasyshifthqDbSchemaMigrator
          */
 
         await _serviceProvider
-            .GetRequiredService<easyshifthqDbContext>()
+            .GetRequiredService<EasyshifthqDbContext>()
             .Database
             .MigrateAsync();
     }
