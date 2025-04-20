@@ -292,4 +292,4 @@ logs/
 *.log
 
 # Local development settings
-*.Development.json
+*.Development.json**/appsettings.secrets.json
