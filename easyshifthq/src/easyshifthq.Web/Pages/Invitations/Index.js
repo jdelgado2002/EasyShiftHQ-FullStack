@@ -5,9 +5,9 @@ $(function () {
     var dataTable = $('#InvitationsTable').DataTable(
         abp.libs.datatables.normalizeConfiguration({
             serverSide: true,
-            paging: true,
+            paging: false,
             order: [[0, "asc"]],
-            searching: false,
+            searching: true,
             ajax: abp.libs.datatables.createAjax(invitationService.getPending),
             columnDefs: [
                 {

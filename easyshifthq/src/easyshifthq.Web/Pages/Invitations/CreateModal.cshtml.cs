@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using easyshifthq.Invitations;
+using Volo.Abp;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
 
 namespace easyshifthq.Web.Pages.Invitations;
 
@@ -40,14 +43,27 @@ public class CreateModalModel : easyshifthqPageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (!ModelState.IsValid)
+        try
         {
-            return Page();
-        }
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
 
-        var dto = ObjectMapper.Map<CreateInvitationViewModel, CreateInvitationDto>(Invitation);
-        await _invitationAppService.CreateAsync(dto);
-        return NoContent();
+            var dto = ObjectMapper.Map<CreateInvitationViewModel, CreateInvitationDto>(Invitation);
+            if (dto == null)
+            {
+                throw new UserFriendlyException(L["Error.Mapping.Failed"]);
+            }
+
+            await _invitationAppService.CreateAsync(dto);
+            return NoContent();
+        }
+        catch (AutoMapperMappingException ex)
+        {
+            Logger.LogError(ex, "Mapping failed for invitation creation");
+            throw new UserFriendlyException(L["Error.Invitation.Creation.Failed"]);
+        }
     }
 
     public class CreateInvitationViewModel
