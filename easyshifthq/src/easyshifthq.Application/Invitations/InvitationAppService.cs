@@ -163,7 +163,7 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
         {
             From = new EmailAddress(_configuration["SendGrid:FromEmail"], _configuration["SendGrid:FromName"]),
             Subject = "You've been invited to join EasyShiftHQ",
-            PlainTextContent = $"You've been invited to join {CurrentTenant.Name} on EasyShiftHQ. Click the link below to set up your account: {_configuration["App:ClientUrl"]}/accept-invitation?token={token}"
+            PlainTextContent = $"You've been invited to join {CurrentTenant.Name} on EasyShiftHQ. Click the link below to set up your account: {_configuration["App:SelfUrl"]}/accept-invitation?token={token}"
         };
         
         msg.AddTo(new EmailAddress(invitation.Email));
