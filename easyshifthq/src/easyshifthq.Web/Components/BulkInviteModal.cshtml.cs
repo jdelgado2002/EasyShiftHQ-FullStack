@@ -30,9 +30,9 @@ public class BulkInviteModalModel : easyshifthqPageModel
     {
         Roles = new List<SelectListItem>
         {
-            new SelectListItem("Admin", "admin"),
-            new SelectListItem("Manager", "manager"),
-            new SelectListItem("Employee", "employee")
+            new SelectListItem("Admin", "ADMIN"),
+            new SelectListItem("Manager", "MANAGER"),
+            new SelectListItem("Employee", "EMPLOYEE")
         };
 
         var locations = await _locationAppService.GetActiveLocationsAsync();

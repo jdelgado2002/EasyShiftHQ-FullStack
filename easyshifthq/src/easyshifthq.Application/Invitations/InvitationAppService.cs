@@ -10,6 +10,8 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Microsoft.Extensions.Configuration;
 using Volo.Abp.Application.Services;
+using System.Web;
+using Microsoft.Extensions.Logging;
 
 namespace easyshifthq.Invitations;
 
@@ -34,10 +36,17 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
 
     public async Task<InvitationDto> CreateAsync(CreateInvitationDto input)
     {
-        // Check if email already exists
-        if (await _invitationRepository.EmailExistsAsync(input.Email))
+        // Check if email already exists as a user
+        var existingUser = await _userManager.FindByEmailAsync(input.Email);
+        if (existingUser != null)
         {
-            throw new UserFriendlyException("An invitation for this email already exists.");
+            throw new UserFriendlyException(L["UserAlreadyExists"]);
+        }
+
+        // Check if a pending invitation exists
+        if (await _invitationRepository.GetListAsync(x => x.Email == input.Email && x.Status == InvitationStatus.Pending) is { } pendingInvites && pendingInvites.Any())
+        {
+            throw new UserFriendlyException(L["PendingInvitationExists"]);
         }
 
         // Generate secure token
@@ -54,7 +63,6 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
         );
         var tokenHash = _passwordHasher.HashPassword(invitation, token);
         invitation.SetTokenHash(tokenHash);
-
 
         await _invitationRepository.InsertAsync(invitation);
 
@@ -74,10 +82,9 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
                 var invitation = await CreateAsync(inviteDto);
                 results.Add(invitation);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Log error but continue with other invitations
-                continue;
+                Logger.LogWarning($"Failed to create invitation for {inviteDto.Email}: {ex.Message}");
             }
         }
 
@@ -93,6 +100,17 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
     public async Task<InvitationDto> AcceptAsync(Guid id)
     {
         var invitation = await _invitationRepository.GetAsync(id);
+        
+        if (invitation.Status != InvitationStatus.Pending)
+        {
+            throw new UserFriendlyException(L["InvitationNotPending"]);
+        }
+
+        if (invitation.IsExpired())
+        {
+            throw new UserFriendlyException(L["InvitationExpired"]);
+        }
+
         invitation.Accept();
         await _invitationRepository.UpdateAsync(invitation);
 
@@ -110,12 +128,18 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
     {
         var invitation = await _invitationRepository.GetAsync(id);
         
+        if (invitation.Status != InvitationStatus.Pending)
+        {
+            throw new UserFriendlyException(L["CannotResendNonPendingInvitation"]);
+        }
+
         // Generate new token
         var token = Guid.NewGuid().ToString("N");
         var tokenHash = _passwordHasher.HashPassword(invitation, token);
 
-        // Update invitation with new token
+        // Update invitation with new token and reset expiration
         invitation.SetTokenHash(tokenHash);
+        invitation.SetExpiresAt(DateTime.UtcNow.AddDays(7));
         await _invitationRepository.UpdateAsync(invitation);
 
         await SendInvitationEmailAsync(invitation, token);
@@ -123,23 +147,35 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
 
     public async Task<InvitationDto> VerifyTokenAsync(string token)
     {
+        if (string.IsNullOrEmpty(token))
+        {
+            throw new UserFriendlyException(L["InvalidToken"]);
+        }
+
         var invitations = await _invitationRepository.GetListAsync();
         var invitation = invitations.FirstOrDefault(x => 
-            _passwordHasher.VerifyHashedPassword(null, x.TokenHash, token) == PasswordVerificationResult.Success);
+            _passwordHasher.VerifyHashedPassword(x, x.TokenHash, token) == PasswordVerificationResult.Success);
 
         if (invitation == null)
         {
-            throw new UserFriendlyException("Invalid or expired invitation token.");
+            throw new UserFriendlyException(L["InvalidToken"]);
         }
 
         if (invitation.IsExpired())
         {
-            throw new UserFriendlyException("This invitation has expired.");
+            throw new UserFriendlyException(L["InvitationExpired"]);
         }
 
         if (invitation.Status != InvitationStatus.Pending)
         {
-            throw new UserFriendlyException("This invitation is no longer valid.");
+            throw new UserFriendlyException(L["InvitationNotPending"]);
+        }
+
+        // Check if user already exists
+        var existingUser = await _userManager.FindByEmailAsync(invitation.Email);
+        if (existingUser != null)
+        {
+            throw new UserFriendlyException(L["UserAlreadyExists"]);
         }
 
         return ObjectMapper.Map<Invitation, InvitationDto>(invitation);
@@ -150,15 +186,26 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
         var apiKey = _configuration["SendGrid:ApiKey"];
         var client = new SendGridClient(apiKey);
 
-        var msg = new SendGridMessage()
+        var acceptUrl = $"{_configuration["App:SelfUrl"]}/acceptinvitation?token={HttpUtility.UrlEncode(token)}";
+        var isSSOEnabled = _configuration.GetValue<bool>("Authentication:SSO:Enabled");
+
+        var emailTemplate = isSSOEnabled ? 
+            "You've been invited to join {0} on EasyShiftHQ. Click the link below to set up your account using your organization credentials:\n\n{1}" :
+            "You've been invited to join {0} on EasyShiftHQ. Click the link below to set up your account and create your password:\n\n{1}";
+
+        var msg = new SendGridMessage
         {
             From = new EmailAddress(_configuration["SendGrid:FromEmail"], _configuration["SendGrid:FromName"]),
             Subject = "You've been invited to join EasyShiftHQ",
-            PlainTextContent = $"You've been invited to join {CurrentTenant.Name} on EasyShiftHQ. Click the link below to set up your account: {_configuration["App:SelfUrl"]}/accept-invitation?token={token}"
+            PlainTextContent = string.Format(emailTemplate, CurrentTenant.Name, acceptUrl)
         };
         
         msg.AddTo(new EmailAddress(invitation.Email));
 
-        await client.SendEmailAsync(msg);
+        var response = await client.SendEmailAsync(msg);
+        if (!response.IsSuccessStatusCode)
+        {
+            Logger.LogWarning($"Failed to send invitation email to {invitation.Email}. Status code: {response.StatusCode}");
+        }
     }
 }

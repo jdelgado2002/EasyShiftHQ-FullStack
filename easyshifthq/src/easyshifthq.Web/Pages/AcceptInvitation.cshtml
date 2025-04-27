@@ -1,0 +1,38 @@
+@page
+@model easyshifthq.Web.Pages.AcceptInvitationModel
+@using Microsoft.AspNetCore.Mvc.Localization
+@using easyshifthq.Localization
+@inject IHtmlLocalizer<easyshifthqResource> L
+
+<div class="card">
+    <div class="card-body">
+        <h2>@L["AcceptInvitation"]</h2>
+        
+        @if (Model.Invitation != null)
+        {
+            <div class="alert alert-info">
+                <p>@L["InvitationAcceptanceMessage", Model.Invitation.FirstName]</p>
+                <p>@L["Email"]: @Model.Invitation.Email</p>
+                <p>@L["Role"]: @Model.Invitation.Role</p>
+            </div>
+
+            <form method="post">
+                <input type="hidden" asp-for="Token" />
+                
+                @if (!Model.IsSSOEnabled)
+                {
+                    <abp-input asp-for="Password" type="password" />
+                    <abp-input asp-for="ConfirmPassword" type="password" />
+                }
+                
+                <abp-button type="submit" button-type="Primary" text="@L["Accept"].Value" />
+            </form>
+        }
+        else
+        {
+            <div class="alert alert-danger">
+                @Model.ErrorMessage
+            </div>
+        }
+    </div>
+</div>

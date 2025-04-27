@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using easyshifthq.Locations;
 using easyshifthq.Web.Pages;
@@ -16,19 +15,24 @@ public class InviteMemberModalModel : easyshifthqPageModel
     private readonly ILocationAppService _locationAppService;
 
     [Required]
+    [Display(Name = "FirstName")]
     public string FirstName { get; set; }
     
     [Required]
+    [Display(Name = "LastName")]
     public string LastName { get; set; }
     
     [Required]
     [EmailAddress]
+    [Display(Name = "Email")]
     public string Email { get; set; }
     
     [Required]
+    [Display(Name = "Role")]
     public string Role { get; set; }
     
     [Required]
+    [Display(Name = "Location")]
     public Guid LocationId { get; set; }
 
     public List<SelectListItem> Roles { get; private set; }
@@ -43,9 +47,9 @@ public class InviteMemberModalModel : easyshifthqPageModel
     {
         Roles = new List<SelectListItem>
         {
-            new SelectListItem("Admin", "Admin"),
-            new SelectListItem("Manager", "Manager"),
-            new SelectListItem("Employee", "Employee")
+            new SelectListItem("Admin", "ADMIN"),
+            new SelectListItem("Manager", "MANAGER"),
+            new SelectListItem("Employee", "EMPLOYEE")
         };
 
         var locations = await _locationAppService.GetActiveLocationsAsync();
