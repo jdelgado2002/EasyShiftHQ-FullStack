@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using SendGrid;
-using SendGrid.Helpers.Mail;
 using Volo.Abp;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
@@ -12,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Volo.Abp.Application.Services;
 using System.Web;
 using Microsoft.Extensions.Logging;
+using Volo.Abp.Emailing;
 
 namespace easyshifthq.Invitations;
 
@@ -21,17 +20,20 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
     private readonly IPasswordHasher<Invitation> _passwordHasher;
     private readonly IdentityUserManager _userManager;
     private readonly IConfiguration _configuration;
+    private readonly IEmailSender _emailSender;
 
     public InvitationAppService(
         IInvitationRepository invitationRepository,
         IPasswordHasher<Invitation> passwordHasher,
         IdentityUserManager userManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IEmailSender emailSender)
     {
         _invitationRepository = invitationRepository;
         _passwordHasher = passwordHasher;
         _userManager = userManager;
         _configuration = configuration;
+        _emailSender = emailSender;
     }
 
     public async Task<InvitationDto> CreateAsync(CreateInvitationDto input)
@@ -84,7 +86,7 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
             }
             catch (Exception ex)
             {
-                Logger.LogWarning($"Failed to create invitation for {inviteDto.Email}: {ex.Message}");
+                Logger.LogWarning(ex, "Failed to create invitation for {Email}", inviteDto.Email);
             }
         }
 
@@ -183,29 +185,25 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
 
     private async Task SendInvitationEmailAsync(Invitation invitation, string token)
     {
-        var apiKey = _configuration["SendGrid:ApiKey"];
-        var client = new SendGridClient(apiKey);
-
         var acceptUrl = $"{_configuration["App:SelfUrl"]}/acceptinvitation?token={HttpUtility.UrlEncode(token)}";
         var isSSOEnabled = _configuration.GetValue<bool>("Authentication:SSO:Enabled");
 
         var emailTemplate = isSSOEnabled ? 
-            "You've been invited to join {0} on EasyShiftHQ. Click the link below to set up your account using your organization credentials:\n\n{1}" :
-            "You've been invited to join {0} on EasyShiftHQ. Click the link below to set up your account and create your password:\n\n{1}";
+            $"You've been invited to join {CurrentTenant.Name} on EasyShiftHQ. Click the link below to set up your account using your organization credentials:\n\n{acceptUrl}" :
+            $"You've been invited to join {CurrentTenant.Name} on EasyShiftHQ. Click the link below to set up your account and create your password:\n\n{acceptUrl}";
 
-        var msg = new SendGridMessage
+        try
         {
-            From = new EmailAddress(_configuration["SendGrid:FromEmail"], _configuration["SendGrid:FromName"]),
-            Subject = "You've been invited to join EasyShiftHQ",
-            PlainTextContent = string.Format(emailTemplate, CurrentTenant.Name, acceptUrl)
-        };
-        
-        msg.AddTo(new EmailAddress(invitation.Email));
-
-        var response = await client.SendEmailAsync(msg);
-        if (!response.IsSuccessStatusCode)
+            await _emailSender.SendAsync(
+                invitation.Email,
+                "You've been invited to join EasyShiftHQ",
+                emailTemplate
+            );
+        }
+        catch (Exception ex)
         {
-            Logger.LogWarning($"Failed to send invitation email to {invitation.Email}. Status code: {response.StatusCode}");
+            Logger.LogWarning(ex, "Failed to send invitation email to {Email}", invitation.Email);
+            // Don't throw - we still want to create the invitation even if email fails
         }
     }
 }
