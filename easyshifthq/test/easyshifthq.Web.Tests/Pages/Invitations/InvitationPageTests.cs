@@ -4,13 +4,28 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using easyshifthq.Invitations;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using Xunit;
+using Volo.Abp.Domain.Repositories;
+using Volo.Abp.Uow;
 
 namespace easyshifthq.Web.Pages.Invitations;
 
 public class InvitationPageTests : easyshifthqWebTestBase
 {
+    private readonly IInvitationRepository _invitationRepository;
+    private readonly IPasswordHasher<Invitation> _passwordHasher;
+    private readonly IInvitationAppService _invitationAppService;
+
+    public InvitationPageTests()
+    {
+        _invitationRepository = GetRequiredService<IInvitationRepository>();
+        _passwordHasher = GetRequiredService<IPasswordHasher<Invitation>>();
+        _invitationAppService = GetRequiredService<IInvitationAppService>();
+    }
+
     [Fact]
     public async Task Should_Display_Invitations_Page()
     {
@@ -41,8 +56,7 @@ public class InvitationPageTests : easyshifthqWebTestBase
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // Verify the invitation was created
-        var invitationService = GetRequiredService<IInvitationAppService>();
-        var invitations = await invitationService.GetPendingAsync();
+        var invitations = await _invitationAppService.GetPendingAsync();
         invitations.ShouldContain(x => x.Email == "newuser@example.com");
     }
 
@@ -66,8 +80,7 @@ public class InvitationPageTests : easyshifthqWebTestBase
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         // Verify the invitations were created
-        var invitationService = GetRequiredService<IInvitationAppService>();
-        var invitations = await invitationService.GetPendingAsync();
+        var invitations = await _invitationAppService.GetPendingAsync();
         foreach (var email in testEmails)
         {
             invitations.ShouldContain(x => x.Email == email);
@@ -78,7 +91,6 @@ public class InvitationPageTests : easyshifthqWebTestBase
     public async Task Should_Accept_Invitation()
     {
         // Arrange
-        var invitationService = GetRequiredService<IInvitationAppService>();
         var invitation = await CreateTestInvitation();
         var token = GenerateValidTokenForInvitation(invitation);
 
@@ -94,8 +106,7 @@ public class InvitationPageTests : easyshifthqWebTestBase
 
     private async Task<InvitationDto> CreateTestInvitation()
     {
-        var invitationService = GetRequiredService<IInvitationAppService>();
-        return await invitationService.CreateAsync(new CreateInvitationDto
+        return await _invitationAppService.CreateAsync(new CreateInvitationDto
         {
             Email = $"test{Guid.NewGuid()}@example.com",
             FirstName = "Test",
@@ -104,10 +115,23 @@ public class InvitationPageTests : easyshifthqWebTestBase
         });
     }
 
-    private string GenerateValidTokenForInvitation(InvitationDto invitation)
+    private string GenerateValidTokenForInvitation(InvitationDto invitationDto)
     {
-        // In a real test, you'd need to get this from the email service mock
-        // or implement a test-specific way to get a valid token
-        return Guid.NewGuid().ToString("N");
+        var token = Guid.NewGuid().ToString("N");
+        
+        using (var scope = ServiceProvider.CreateScope())
+        {
+            var uowManager = scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>();
+            using (var uow = uowManager.Begin())
+            {
+                var invitation = _invitationRepository.GetAsync(invitationDto.Id).GetAwaiter().GetResult();
+                var hash = _passwordHasher.HashPassword(invitation, token);
+                invitation.SetTokenHash(hash);
+                _invitationRepository.UpdateAsync(invitation).GetAwaiter().GetResult();
+                uow.CompleteAsync().GetAwaiter().GetResult();
+            }
+        }
+
+        return token;
     }
 }
