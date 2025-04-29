@@ -60,10 +60,14 @@ public abstract class InvitationSecurityTests<TStartupModule> : easyshifthqAppli
         var invitation = await CreateTestInvitation();
         await WithUnitOfWorkAsync(async () =>
         {
-            invitation.SetExpiresAt(DateTime.UtcNow.AddDays(-1));
+            // Set expiration to 1 second in the future
+            invitation.SetExpiresAt(DateTime.UtcNow.AddSeconds(1));
             await _invitationRepository.UpdateAsync(invitation);
         });
         var token = GenerateTokenForInvitation(invitation);
+
+        // Wait for the invitation to expire
+        await Task.Delay(1500); // Wait 1.5 seconds to ensure expiration
 
         // Act & Assert
         await Should.ThrowAsync<UserFriendlyException>(async () =>
