@@ -1,11 +1,19 @@
 using System;
 using Shouldly;
 using Xunit;
+using Volo.Abp.Modularity;
+using System.Threading.Tasks;
+
 
 namespace easyshifthq.Invitations;
 
-public class InvitationTests : easyshifthqDomainTestBase<easyshifthqDomainTestModule>
+public abstract class InvitationTests<TStartupModule> : easyshifthqDomainTestBase<TStartupModule>
+    where TStartupModule : IAbpModule
 {
+    protected InvitationTests()
+    {
+    }
+
     [Fact]
     public void Should_Create_Valid_Invitation()
     {
@@ -83,11 +91,14 @@ public class InvitationTests : easyshifthqDomainTestBase<easyshifthqDomainTestMo
     }
 
     [Fact]
-    public void Should_Not_Accept_Expired_Invitation()
+    public async Task Should_Not_Accept_Expired_Invitation()
     {
         // Arrange
         var invitation = CreateValidInvitation();
-        invitation.SetExpiresAt(DateTime.UtcNow.AddDays(-1));
+        invitation.SetExpiresAt(DateTime.UtcNow.AddMilliseconds(5));
+
+        // introduce a delay to ensure the invitation is expired
+        await Task.Delay(10);
 
         // Act & Assert
         Should.Throw<InvalidOperationException>(() =>
