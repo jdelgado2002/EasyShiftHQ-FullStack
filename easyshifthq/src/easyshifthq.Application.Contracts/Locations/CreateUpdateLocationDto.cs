@@ -1,16 +1,22 @@
-using System;
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.MultiTenancy;
+using System.ComponentModel.DataAnnotations;
 
 namespace easyshifthq.Locations;
 
-public class LocationDto : EntityDto<Guid>, IMultiTenant
+public class CreateUpdateLocationDto
 {
-    public Guid? TenantId { get; set; }
+    [Required]
+    [StringLength(128)]
     public string Name { get; set; }
+    
+    [Required]
     public string Address { get; set; }
-    public bool IsActive { get; set; }
+    
+    [Required]
     public string TimeZone { get; set; }
+    
+    [StringLength(50)]
     public string JurisdictionCode { get; set; }
+    
+    [StringLength(500)]
     public string Notes { get; set; }
 }

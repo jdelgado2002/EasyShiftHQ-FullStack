@@ -20,7 +20,7 @@ public class easyshifthqMenuContributor : IMenuContributor
         }
     }
 
-    private static Task ConfigureMainMenuAsync(MenuConfigurationContext context)
+    private static async Task ConfigureMainMenuAsync(MenuConfigurationContext context)
     {
         var l = context.GetLocalizer<easyshifthqResource>();
 
@@ -58,6 +58,20 @@ public class easyshifthqMenuContributor : IMenuContributor
             )
         );
 
+        // Add Location menu item
+        if (await context.IsGrantedAsync(LocationPermissions.Locations.Default))
+        {
+            context.Menu.AddItem(
+                new ApplicationMenuItem(
+                    "Location",
+                    l["LocationManagement"],
+                    url: "/Locations",
+                    icon: "fas fa-map-marker-alt",
+                    order: 3
+                )
+            );
+        }
+
         //Administration
         var administration = context.Menu.GetAdministration();
         administration.Order = 6;
@@ -75,7 +89,5 @@ public class easyshifthqMenuContributor : IMenuContributor
         }
         
         administration.SetSubItemOrder(SettingManagementMenuNames.GroupName, 3);
-
-        return Task.CompletedTask;
     }
 }

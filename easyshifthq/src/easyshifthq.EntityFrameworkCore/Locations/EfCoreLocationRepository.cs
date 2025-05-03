@@ -24,4 +24,22 @@ public class EfCoreLocationRepository : EfCoreRepository<EasyshifthqDbContext, L
             .OrderBy(x => x.Name)
             .ToListAsync();
     }
+
+    public async Task<List<Location>> GetLocationsInJurisdictionAsync(string jurisdictionCode)
+    {
+        var dbSet = await GetDbSetAsync();
+        return await dbSet
+            .Where(x => x.JurisdictionCode == jurisdictionCode)
+            .OrderBy(x => x.Name)
+            .ToListAsync();
+    }
+
+    public async Task<List<Location>> GetLocationsByTimeZoneAsync(string timeZone)
+    {
+        var dbSet = await GetDbSetAsync();
+        return await dbSet
+            .Where(x => x.TimeZone == timeZone)
+            .OrderBy(x => x.Name)
+            .ToListAsync();
+    }
 }

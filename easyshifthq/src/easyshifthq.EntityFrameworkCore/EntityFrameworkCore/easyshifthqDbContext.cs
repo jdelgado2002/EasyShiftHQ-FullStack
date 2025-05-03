@@ -15,6 +15,7 @@ using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using easyshifthq.Invitations;
+using easyshifthq.Locations;
 
 namespace easyshifthq.EntityFrameworkCore;
 
@@ -29,6 +30,8 @@ public class EasyshifthqDbContext :
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
     public DbSet<Invitation> Invitations { get; set; }
+    public DbSet<Location> Locations { get; set; }
+    public DbSet<InvitationLocation> InvitationLocations { get; set; }
 
     #region Entities from the modules
 
@@ -95,6 +98,42 @@ public class EasyshifthqDbContext :
             b.Property(x => x.TokenHash).IsRequired();
             
             b.HasIndex(x => x.Email);
+
+            b.HasMany(x => x.InvitationLocations)
+             .WithOne(x => x.Invitation)
+             .HasForeignKey(x => x.InvitationId)
+             .IsRequired()
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Location>(b =>
+        {
+            b.ToTable(easyshifthqConsts.DbTablePrefix + "Locations", easyshifthqConsts.DbSchema);
+            b.ConfigureByConvention();
+            
+            b.Property(x => x.Name).IsRequired().HasMaxLength(128);
+            b.Property(x => x.Address).IsRequired();
+            b.Property(x => x.TimeZone).IsRequired();
+            b.Property(x => x.JurisdictionCode).HasMaxLength(50);
+            b.Property(x => x.Notes).HasMaxLength(500);
+            
+            b.HasIndex(x => x.Name);
+            b.HasIndex(x => x.TimeZone);
+            b.HasIndex(x => x.JurisdictionCode);
+
+            b.HasMany<InvitationLocation>()
+             .WithOne(x => x.Location)
+             .HasForeignKey(x => x.LocationId)
+             .IsRequired()
+             .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InvitationLocation>(b =>
+        {
+            b.ToTable(easyshifthqConsts.DbTablePrefix + "InvitationLocations", easyshifthqConsts.DbSchema);
+            b.ConfigureByConvention();
+            
+            b.HasKey(x => new { x.InvitationId, x.LocationId });
         });
     }
 }

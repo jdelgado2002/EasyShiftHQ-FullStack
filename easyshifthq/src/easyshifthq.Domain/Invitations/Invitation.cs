@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
+using easyshifthq.Locations;
 
 namespace easyshifthq.Invitations;
 
@@ -15,8 +18,21 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public DateTime ExpiresAt { get; private set; }
     public InvitationStatus Status { get; private set; }
     public Guid? TenantId { get; set; }
+    public ICollection<InvitationLocation> InvitationLocations { get; private set; }
 
-    private Invitation() { } // For EF Core
+    /// <summary>
+    /// Private constructor for EF Core entity materialization.
+    /// Required for EF Core to create instances when loading from the database.
+    /// </summary>
+    private Invitation() 
+    { 
+        Email = string.Empty;
+        FirstName = string.Empty;
+        LastName = string.Empty;
+        Role = string.Empty;
+        TokenHash = string.Empty;
+        InvitationLocations = new List<InvitationLocation>();
+    }
 
     public Invitation(
         Guid id,
@@ -38,6 +54,7 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
         Status = InvitationStatus.Pending;
         ExpiresAt = DateTime.UtcNow.AddDays(7);
         TenantId = tenantId;
+        InvitationLocations = new List<InvitationLocation>();
     }
 
     public void Accept()
@@ -123,5 +140,24 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
             throw new InvalidOperationException("Cannot revoke an invitation that is not pending.");
         }
         Status = status;
+    }
+
+    public void AddLocation(Guid locationId)
+    {
+        if (InvitationLocations.Any(x => x.LocationId == locationId))
+        {
+            return;
+        }
+
+        InvitationLocations.Add(new InvitationLocation(Id, locationId, TenantId));
+    }
+
+    public void RemoveLocation(Guid locationId)
+    {
+        var location = InvitationLocations.FirstOrDefault(x => x.LocationId == locationId);
+        if (location != null)
+        {
+            InvitationLocations.Remove(location);
+        }
     }
 }

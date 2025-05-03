@@ -8,4 +8,6 @@ namespace easyshifthq.Locations;
 public interface ILocationRepository : IRepository<Location, Guid>
 {
     Task<List<Location>> GetActiveLocationsAsync();
+    Task<List<Location>> GetLocationsInJurisdictionAsync(string jurisdictionCode);
+    Task<List<Location>> GetLocationsByTimeZoneAsync(string timeZone);
 }
