@@ -8,7 +8,7 @@ using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 using Microsoft.Extensions.Configuration;
 using Volo.Abp.Application.Services;
-using System.Web;
+using System.Net;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.Emailing;
 
@@ -185,7 +185,7 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
 
     private async Task SendInvitationEmailAsync(Invitation invitation, string token)
     {
-        var acceptUrl = $"{_configuration["App:SelfUrl"]}/acceptinvitation?token={HttpUtility.UrlEncode(token)}";
+        var acceptUrl = $"{_configuration["App:SelfUrl"]}/acceptinvitation?token={WebUtility.UrlEncode(token)}";
         var isSSOEnabled = _configuration.GetValue<bool>("Authentication:SSO:Enabled");
 
         var emailTemplate = isSSOEnabled ? 
