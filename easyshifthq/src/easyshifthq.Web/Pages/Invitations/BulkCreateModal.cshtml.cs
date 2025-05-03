@@ -126,9 +126,20 @@ public class BulkCreateModalModel : easyshifthqPageModel
 
     private class CsvInvitationRecord
     {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
         public string Email { get; set; }
+
+        [Required(ErrorMessage = "First name is required")] 
+        [StringLength(128, ErrorMessage = "First name cannot exceed 128 characters")]
         public string FirstName { get; set; }
+
+        [Required(ErrorMessage = "Last name is required")]
+        [StringLength(128, ErrorMessage = "Last name cannot exceed 128 characters")] 
         public string LastName { get; set; }
+
+        [StringLength(50, ErrorMessage = "Role cannot exceed 50 characters")]
         public string Role { get; set; }
     }
+
 }
