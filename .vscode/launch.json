@@ -1,0 +1,46 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "EasyShiftHQ Web",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/easyshifthq/src/easyshifthq.Web/bin/Debug/net9.0/easyshifthq.Web.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/easyshifthq/src/easyshifthq.Web",
+            "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                "uriFormat": "%s"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "https://localhost:44387"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/easyshifthq/src/easyshifthq.Web/Views"
+            }
+        },
+        {
+            "name": "EasyShiftHQ API",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/easyshifthq/src/easyshifthq.HttpApi/bin/Debug/net9.0/easyshifthq.HttpApi.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/easyshifthq/src/easyshifthq.HttpApi",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Web + API",
+            "configurations": ["EasyShiftHQ Web", "EasyShiftHQ API"]
+        }
+    ]
+}

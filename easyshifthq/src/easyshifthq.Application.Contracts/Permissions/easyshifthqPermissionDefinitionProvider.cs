@@ -11,8 +11,11 @@ public class easyshifthqPermissionDefinitionProvider : PermissionDefinitionProvi
     {
         var myGroup = context.AddGroup(easyshifthqPermissions.GroupName);
 
-        //Define your own permissions here. Example:
-        //myGroup.AddPermission(easyshifthqPermissions.MyPermission1, L("Permission:MyPermission1"));
+        var teamManagement = myGroup.AddPermission(easyshifthqPermissions.TeamManagement.Default, L("Permission:TeamManagement"));
+        teamManagement.AddChild(easyshifthqPermissions.TeamManagement.Create, L("Permission:TeamManagement.Create"));
+        teamManagement.AddChild(easyshifthqPermissions.TeamManagement.Edit, L("Permission:TeamManagement.Edit"));
+        teamManagement.AddChild(easyshifthqPermissions.TeamManagement.Delete, L("Permission:TeamManagement.Delete"));
+        teamManagement.AddChild(easyshifthqPermissions.TeamManagement.BulkInvite, L("Permission:TeamManagement.BulkInvite"));
     }
 
     private static LocalizableString L(string name)

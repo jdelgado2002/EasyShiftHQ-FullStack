@@ -35,13 +35,35 @@ public class easyshifthqMenuContributor : IMenuContributor
             )
         );
 
+        // Team Management
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Team",
+                l["TeamMembers"],
+                url: "/Team",
+                icon: "fas fa-users",
+                order: 2,
+                requiredPermissionName: easyshifthqPermissions.TeamManagement.Default
+            )
+        );
+
+        // Add Invitations menu item
+        context.Menu.AddItem(
+            new ApplicationMenuItem(
+                "Invitations",
+                l["Invitations"],
+                url: "/Invitations",
+                icon: "fas fa-envelope",
+                order: 3
+            )
+        );
 
         //Administration
         var administration = context.Menu.GetAdministration();
         administration.Order = 6;
 
         //Administration->Identity
-        administration.SetSubItemOrder(IdentityMenuNames.GroupName, 1);
+        administration.SetSubItemOrder(IdentityMenuNames.GroupName, 2);
     
         if (MultiTenancyConsts.IsEnabled)
         {
@@ -54,9 +76,6 @@ public class easyshifthqMenuContributor : IMenuContributor
         
         administration.SetSubItemOrder(SettingManagementMenuNames.GroupName, 3);
 
-        //Administration->Settings
-        administration.SetSubItemOrder(SettingManagementMenuNames.GroupName, 7);
-        
         return Task.CompletedTask;
     }
 }

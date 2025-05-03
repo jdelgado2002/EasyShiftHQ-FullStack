@@ -134,6 +134,54 @@ export const EmployeeList: React.FC = () => {
 - Write integration tests for data access
 - Include UI component tests
 
+### Test Structure Pattern
+When creating tests that need to store or access data:
+
+1. Create an abstract base test class with the module type parameter:
+```csharp
+public abstract class MyFeatureTests<TStartupModule> : easyshifthqApplicationTestBase<TStartupModule> 
+    where TStartupModule : IAbpModule
+{
+    private readonly IMyService _myService;
+
+    protected MyFeatureTests()
+    {
+        _myService = GetRequiredService<IMyService>();
+    }
+
+    [Fact]
+    public async Task Should_Do_Something()
+    {
+        // Your test implementation
+    }
+}
+```
+
+2. Create concrete test classes for each database context:
+```csharp
+[Collection(easyshifthqTestConsts.CollectionDefinitionName)]
+public class EfCoreMyFeature_Tests : MyFeatureTests<easyshifthqEntityFrameworkCoreTestModule>
+{
+}
+```
+
+This pattern allows:
+- Reuse of test logic across different database implementations
+- Consistent test setup through protected constructors
+- Proper dependency injection in test environments
+- Clean separation of test logic from test infrastructure
+
+### Best Practices
+- Put common test logic in the abstract base class
+- Use protected constructors for service initialization
+- Follow the naming convention: `[Feature]Tests` for base classes and `EfCore[Feature]_Tests` for EF Core implementations
+- Use the `[Collection]` attribute to ensure proper test isolation
+- Initialize services using `GetRequiredService<T>()`
+
+For examples, see:
+- `InvitationSecurityTests` - Security-focused test implementation
+- `InvitationAppServiceTests` - Application service test implementation
+
 ## 4. Code Analysis
 - Follow Microsoft Code Analysis rules
 - Use provided `.editorconfig` settings

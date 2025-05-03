@@ -1,0 +1,75 @@
+@page
+@using easyshifthq.Localization
+@using easyshifthq.Web.Pages.Team
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@model IndexModel
+@inject IHtmlLocalizer<easyshifthqResource> L
+
+@section scripts {
+    <abp-script src="/Pages/Team/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <h2>@L["TeamMembers"]</h2>
+            </abp-column>
+            <abp-column size-md="_6" class="text-end">
+                <abp-button id="InviteTeamMemberButton"
+                           text="@L["InviteTeamMember"].Value"
+                           icon="plus"
+                           button-type="Primary"/>
+                
+                <abp-button id="BulkInviteButton"
+                           text="@L["BulkInvite"].Value"
+                           icon="upload"
+                           button-type="Secondary"/>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="TeamMembersTable">
+            <thead>
+                <tr>
+                    <th>@L["Name"]</th>
+                    <th>@L["Email"]</th>
+                    <th>@L["Role"]</th>
+                    <th>@L["Location"]</th>
+                    <th>@L["Status"]</th>
+                    <th>@L["Actions"]</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>
+
+<abp-modal size="Large" id="InviteTeamMemberModal">
+    <abp-modal-header title="@L["InviteTeamMember"].Value"></abp-modal-header>
+    <abp-modal-body>
+        <abp-dynamic-form abp-model="InviteMember" asp-page="/Team/Index">
+            <abp-input asp-for="InviteMember.FirstName" />
+            <abp-input asp-for="InviteMember.LastName" />
+            <abp-input asp-for="InviteMember.Email" type="email" />
+            <abp-select asp-for="InviteMember.Role" asp-items="@Model.Roles"/>
+            <abp-select asp-for="InviteMember.LocationId" asp-items="@Model.Locations"/>
+        </abp-dynamic-form>
+    </abp-modal-body>
+    <abp-modal-footer buttons="@AbpModalButtons.Save|@AbpModalButtons.Cancel"></abp-modal-footer>
+</abp-modal>
+
+<abp-modal id="BulkInviteModal">
+    <abp-modal-header title="@L["BulkInvite"].Value"></abp-modal-header>
+    <abp-modal-body>
+        <div class="mb-3">
+            <p>@L["BulkInviteDescription"]</p>
+            <a href="/templates/bulk-invite-template.csv" class="btn btn-link">@L["DownloadTemplate"]</a>
+        </div>
+        <form method="post" enctype="multipart/form-data" id="bulkUploadForm" asp-page="./BulkInvite">
+            @Html.AntiForgeryToken()
+            <abp-input asp-for="CsvFile" type="file" accept=".csv" />
+        </form>
+    </abp-modal-body>
+    <abp-modal-footer buttons="@AbpModalButtons.Save|@AbpModalButtons.Cancel"></abp-modal-footer>
+</abp-modal>

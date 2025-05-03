@@ -21,6 +21,8 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
+bin/
+obj/
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -272,3 +274,22 @@ src/easyshifthq.Blazor.Server.Tiered/Logs/*
 # IdentityServer temp files
 tempkey.rsa
 tempkey.jwk
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Sensitive configuration
+**/appsettings.secrets.json
+**/appsettings.*.json
+!**/appsettings.json
+
+# Logs
+logs/
+*.log
+
+# Local development settings
+*.Development.json**/appsettings.secrets.json

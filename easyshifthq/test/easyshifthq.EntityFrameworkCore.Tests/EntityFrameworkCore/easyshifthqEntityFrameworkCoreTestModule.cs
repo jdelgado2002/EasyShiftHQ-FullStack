@@ -37,7 +37,6 @@ public class easyshifthqEntityFrameworkCoreTestModule : AbpModule
         context.Services.AddAlwaysDisableUnitOfWorkTransaction();
 
         ConfigureInMemorySqlite(context.Services);
-
     }
 
     private void ConfigureInMemorySqlite(IServiceCollection services)
@@ -63,11 +62,11 @@ public class easyshifthqEntityFrameworkCoreTestModule : AbpModule
         var connection = new SqliteConnection("Data Source=:memory:");
         connection.Open();
 
-        var options = new DbContextOptionsBuilder<easyshifthqDbContext>()
+        var options = new DbContextOptionsBuilder<EasyshifthqDbContext>()
             .UseSqlite(connection)
             .Options;
 
-        using (var context = new easyshifthqDbContext(options))
+        using (var context = new EasyshifthqDbContext(options))
         {
             context.GetService<IRelationalDatabaseCreator>().CreateTables();
         }

@@ -1,0 +1,49 @@
+@page
+@using easyshifthq.Invitations
+@using easyshifthq.Web.Pages.Invitations
+@using Microsoft.AspNetCore.Mvc.Localization
+@using easyshifthq.Localization
+@model IndexModel
+@inject IHtmlLocalizer<easyshifthqResource> L
+@{
+    ViewBag.Title = L["Invitations"];
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <h2>@L["Invitations"]</h2>
+            </abp-column>
+            <abp-column size-md="_6" class="text-end">
+                <abp-button id="BulkInviteButton"
+                           text="@L["BulkInvite"].Value"
+                           icon="upload"
+                           button-type="Secondary" />
+                           
+                <abp-button id="NewInviteButton"
+                           text="@L["NewInvite"].Value"
+                           icon="plus"
+                           button-type="Primary" />
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="InvitationsTable">
+            <thead>
+                <tr>
+                    <th>@L["Email"]</th>
+                    <th>@L["FirstName"]</th>
+                    <th>@L["LastName"]</th>
+                    <th>@L["Role"]</th>
+                    <th>@L["Status"]</th>
+                    <th>@L["Actions"]</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>
+
+@section scripts {
+    <abp-script src="/Pages/Invitations/Index.js" />
+}

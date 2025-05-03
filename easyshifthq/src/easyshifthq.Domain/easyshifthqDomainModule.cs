@@ -17,6 +17,7 @@ using Volo.Abp.Emailing;
 using Volo.Abp.FeatureManagement;
 using Volo.Abp.Identity;
 using Volo.Abp.TenantManagement;
+using easyshifthq.Email;
 
 namespace easyshifthq;
 
@@ -66,9 +67,10 @@ public class easyshifthqDomainModule : AbpModule
             options.Languages.Add(new LanguageInfo("sv", "sv", "Svenska"));
         });
         
-
 #if DEBUG
         context.Services.Replace(ServiceDescriptor.Singleton<IEmailSender, NullEmailSender>());
+#else
+        context.Services.Replace(ServiceDescriptor.Transient<IEmailSender, SendGridEmailSender>());
 #endif
     }
 }

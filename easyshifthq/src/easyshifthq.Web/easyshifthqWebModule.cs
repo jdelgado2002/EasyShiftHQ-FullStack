@@ -165,8 +165,16 @@ public class easyshifthqWebModule : AbpModule
                 LeptonXLiteThemeBundles.Styles.Global,
                 bundle =>
                 {
-                    bundle.AddFiles("/global-scripts.js");
                     bundle.AddFiles("/global-styles.css");
+                }
+            );
+
+            options.ScriptBundles.Configure(
+                LeptonXLiteThemeBundles.Scripts.Global,
+                bundle =>
+                {
+                    bundle.AddFiles("/libs/luxon/luxon.min.js");
+                    bundle.AddFiles("/global-scripts.js");
                 }
             );
         });

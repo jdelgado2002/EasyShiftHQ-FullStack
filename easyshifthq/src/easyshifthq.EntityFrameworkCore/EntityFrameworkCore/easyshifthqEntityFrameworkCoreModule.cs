@@ -42,7 +42,7 @@ public class easyshifthqEntityFrameworkCoreModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddAbpDbContext<easyshifthqDbContext>(options =>
+        context.Services.AddAbpDbContext<EasyshifthqDbContext>(options =>
         {
                 /* Remove "includeAllEntities: true" to create
                  * default repositories only for aggregate roots */

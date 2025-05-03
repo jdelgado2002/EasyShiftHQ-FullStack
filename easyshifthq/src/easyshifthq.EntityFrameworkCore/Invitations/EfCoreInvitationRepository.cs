@@ -31,8 +31,9 @@ public class EfCoreInvitationRepository : EfCoreRepository<EasyshifthqDbContext,
     public async Task<List<Invitation>> GetPendingInvitationsAsync()
     {
         var dbSet = await GetDbSetAsync();
+        var now = DateTime.UtcNow;
         return await dbSet
-            .Where(x => x.Status == InvitationStatus.Pending && !x.IsExpired())
+            .Where(x => x.Status == InvitationStatus.Pending && x.ExpiresAt > now)
             .ToListAsync();
     }
 

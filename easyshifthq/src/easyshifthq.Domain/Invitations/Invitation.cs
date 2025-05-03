@@ -42,16 +42,86 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public void Accept()
     {
+        if (IsExpired())
+        {
+            throw new InvalidOperationException("Invitation has expired.");
+        }
+        if (Status != InvitationStatus.Pending)
+        {
+            throw new InvalidOperationException("Invitation has already been accepted or revoked.");
+        }
         Status = InvitationStatus.Accepted;
     }
 
     public void Revoke()
     {
+        if (Status != InvitationStatus.Pending)
+        {
+            throw new InvalidOperationException("Invitation has already been accepted or revoked.");
+        }
+        if (IsExpired())
+        {
+            throw new InvalidOperationException("Invitation has expired.");
+        }
+        // If the invitation is accepted, we can still revoke it
         Status = InvitationStatus.Revoked;
     }
 
     public bool IsExpired()
     {
         return DateTime.UtcNow > ExpiresAt;
+    }
+
+    public void SetTokenHash(string tokenHash)
+    {
+        if (string.IsNullOrEmpty(tokenHash))
+        {
+            throw new ArgumentException("Token hash cannot be null or empty.", nameof(tokenHash));
+        }
+        if (tokenHash.Length > 128)
+        {
+            throw new ArgumentException("Token hash cannot exceed 128 characters.", nameof(tokenHash));
+        }
+        TokenHash = tokenHash;
+    }
+    public void SetExpiresAt(DateTime expiresAt)
+    {
+        if (expiresAt <= DateTime.UtcNow)
+        {
+            throw new ArgumentException("Expiration date must be in the future.", nameof(expiresAt));
+        }
+        if (expiresAt > DateTime.UtcNow.AddDays(30))
+        {
+            throw new ArgumentException("Expiration date cannot exceed 30 days from now.", nameof(expiresAt));
+        }
+        if (expiresAt.Kind != DateTimeKind.Utc)
+        {
+            throw new ArgumentException("Expiration date must be in UTC.", nameof(expiresAt));
+        }
+        ExpiresAt = expiresAt;
+    }
+    public void SetLocationId(Guid? locationId)
+    {
+        if (locationId == null)
+        {
+            throw new ArgumentNullException(nameof(locationId), "Location ID cannot be null.");
+        }
+        if (locationId == Guid.Empty)
+        {
+            throw new ArgumentException("Location ID cannot be an empty GUID.", nameof(locationId));
+        }
+        LocationId = locationId;
+    }
+    public void SetStatus(InvitationStatus status)
+    {
+        if (status == InvitationStatus.Accepted && Status != InvitationStatus.Pending)
+        {
+            throw new InvalidOperationException("Cannot accept an invitation that is not pending.");
+        }
+        if (status == InvitationStatus.Revoked && Status != InvitationStatus.Pending)
+        {
+            throw new InvalidOperationException("Cannot revoke an invitation that is not pending.");
+        }
+        Status = status;
     }
 }

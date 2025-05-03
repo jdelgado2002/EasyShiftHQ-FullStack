@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="SendGrid" Version="9.29.3" />
     <PackageReference Include="Volo.Abp.Emailing" Version="9.1.0" />
     <PackageReference Include="Volo.Abp.Caching" Version="9.1.0" />
     <PackageReference Include="Volo.Abp.PermissionManagement.Domain.Identity" Version="9.1.0" />
