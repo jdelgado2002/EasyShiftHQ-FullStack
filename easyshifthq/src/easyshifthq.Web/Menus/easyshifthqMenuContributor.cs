@@ -67,7 +67,7 @@ public class easyshifthqMenuContributor : IMenuContributor
                     l["LocationManagement"],
                     url: "/Locations",
                     icon: "fas fa-map-marker-alt",
-                    order: 3
+                    order: 4
                 )
             );
         }
