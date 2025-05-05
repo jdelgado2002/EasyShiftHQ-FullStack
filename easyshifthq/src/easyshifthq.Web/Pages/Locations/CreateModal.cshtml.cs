@@ -7,18 +7,19 @@ namespace easyshifthq.Web.Pages.Locations;
 public class CreateModalModel : easyshifthqPageModel
 {
     [BindProperty]
-    public required CreateUpdateLocationDto Location { get; set; }
+    public CreateUpdateLocationDto Location { get; set; }
 
     private readonly ILocationAppService _locationAppService;
 
     public CreateModalModel(ILocationAppService locationAppService)
     {
         _locationAppService = locationAppService;
+        Location = new CreateUpdateLocationDto();
     }
 
     public void OnGet()
     {
-        Location = new CreateUpdateLocationDto();
+        // No need to initialize Location here since it's done in constructor
     }
 
     public async Task<IActionResult> OnPostAsync()

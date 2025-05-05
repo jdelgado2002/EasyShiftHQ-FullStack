@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using easyshifthq.Invitations;
+using easyshifthq.Locations;
 using Volo.Abp;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
@@ -14,22 +16,24 @@ namespace easyshifthq.Web.Pages.Invitations;
 public class CreateModalModel : easyshifthqPageModel
 {
     private readonly IInvitationAppService _invitationAppService;
+    private readonly ILocationAppService _locationAppService;
 
     [BindProperty]
-    public CreateInvitationViewModel Invitation { get; set; }
+    public CreateInvitationViewModel Invitation { get; set; } = new();
 
-    public List<SelectListItem> Roles { get; set; }
-    public List<SelectListItem> Locations { get; set; }
+    public List<SelectListItem> Roles { get; set; } = new();
+    public List<SelectListItem> Locations { get; set; } = new();
 
-    public CreateModalModel(IInvitationAppService invitationAppService)
+    public CreateModalModel(
+        IInvitationAppService invitationAppService,
+        ILocationAppService locationAppService)
     {
         _invitationAppService = invitationAppService;
-        Invitation = new CreateInvitationViewModel();
+        _locationAppService = locationAppService;
     }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        // TODO: Load roles and locations from their respective services
         Roles = new List<SelectListItem>
         {
             new SelectListItem { Value = "Admin", Text = "Admin" },
@@ -37,8 +41,10 @@ public class CreateModalModel : easyshifthqPageModel
             new SelectListItem { Value = "Employee", Text = "Employee" }
         };
 
-        // Locations will be populated from your locations service
-        Locations = new List<SelectListItem>();
+        var locations = await _locationAppService.GetActiveLocationsAsync();
+        Locations = locations
+            .Select(l => new SelectListItem(l.Name, l.Id.ToString()))
+            .ToList();
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -70,18 +76,18 @@ public class CreateModalModel : easyshifthqPageModel
     {
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [Required]
         [StringLength(128)]
-        public string FirstName { get; set; }
+        public string FirstName { get; set; } = string.Empty;
 
         [Required]
         [StringLength(128)]
-        public string LastName { get; set; }
+        public string LastName { get; set; } = string.Empty;
 
         [Required]
-        public string Role { get; set; }
+        public string Role { get; set; } = string.Empty;
 
         public Guid? LocationId { get; set; }
     }

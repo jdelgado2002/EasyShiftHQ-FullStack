@@ -14,7 +14,7 @@
         <abp-modal-body>
             <div class="mb-3">
                 <p>@L["BulkInviteInstructions"]</p>
-                <p><small class="text-muted">@L["BulkInviteFormat"]: Email, FirstName, LastName, Role (optional)</small></p>
+                <p><small class="text-muted">@L["BulkInviteFormat"]: Email, FirstName, LastName, Role (optional), LocationId (optional)</small></p>
             </div>
             
             <div class="mb-3">
@@ -38,20 +38,6 @@
     </abp-modal>
 </form>
 
-<!-- Add a span for displaying the selected file name -->
-<div class="mb-3">
-    <label class="form-label" for="csvFile">@L["SelectCSVFile"]</label>
-    <input
-        type="file"
-        class="form-control"
-        id="csvFile"
-        name="csvFile"
-        accept=".csv"
-        required
-    />
-    <span id="selectedFileName" class="mt-1 d-block"></span>
-</div>
-
 @section scripts {
     <script>
         $(function () {
@@ -68,5 +54,4 @@
             });
         });
     </script>
-}
 }
