@@ -2,9 +2,11 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using easyshifthq.Locations;
+using Volo.Abp.ObjectMapping;
 
 namespace easyshifthq.Web.Pages.Locations;
 
+[ValidateAntiForgeryToken]
 public class EditModalModel : easyshifthqPageModel
 {
     [HiddenInput]
@@ -12,19 +14,23 @@ public class EditModalModel : easyshifthqPageModel
     public Guid Id { get; set; }
 
     [BindProperty]
-    public required CreateUpdateLocationDto Location { get; set; }
+    public CreateUpdateLocationDto Location { get; set; } = new();
 
     private readonly ILocationAppService _locationAppService;
+    private readonly IObjectMapper _objectMapper;
 
-    public EditModalModel(ILocationAppService locationAppService)
+    public EditModalModel(
+        ILocationAppService locationAppService,
+        IObjectMapper objectMapper)
     {
         _locationAppService = locationAppService;
+        _objectMapper = objectMapper;
     }
 
     public async Task OnGetAsync()
     {
         var location = await _locationAppService.GetAsync(Id);
-        Location = ObjectMapper.Map<LocationDto, CreateUpdateLocationDto>(location);
+        Location = _objectMapper.Map<LocationDto, CreateUpdateLocationDto>(location);
     }
 
     public async Task<IActionResult> OnPostAsync()

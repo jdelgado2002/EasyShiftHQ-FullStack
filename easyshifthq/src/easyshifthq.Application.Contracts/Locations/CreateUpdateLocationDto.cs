@@ -15,8 +15,8 @@ public class CreateUpdateLocationDto
     public string TimeZone { get; set; }
     
     [StringLength(50)]
-    public string JurisdictionCode { get; set; }
+    public string? JurisdictionCode { get; set; }
     
     [StringLength(500)]
-    public string Notes { get; set; }
+    public string? Notes { get; set; }
 }
