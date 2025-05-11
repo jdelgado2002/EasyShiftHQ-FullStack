@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Application.Dtos;
 
 namespace easyshifthq.Locations;
 
 public interface ILocationAppService : IApplicationService
 {
     Task<LocationDto> GetAsync(Guid id);
-    Task<List<LocationDto>> GetListAsync();
+    Task<PagedResultDto<LocationDto>> GetListAsync(GetLocationListDto input);
     Task<List<LocationDto>> GetActiveLocationsAsync();
     Task<List<LocationDto>> GetLocationsInJurisdictionAsync(string jurisdictionCode);
     Task<List<LocationDto>> GetLocationsByTimeZoneAsync(string timeZone);

@@ -5,52 +5,50 @@ $(function () {
 
     var dataTable = $('#LocationsTable').DataTable({
         processing: true,
-        serverSide: false,
+        serverSide: true,
         paging: true,
         pageLength: 10,
         order: [[0, "asc"]],
         searching: true,
-        ajax: function(data, callback, settings) {
-            console.log('Loading locations...');
-            easyshifthq.locations.location.getList()
-                .then(function(result) {
-                    console.log('Received locations:', result);
-                    callback({
-                        recordsTotal: result.length,
-                        recordsFiltered: result.length,
-                        data: result
-                    });
-                })
-                .catch(function(error) {
-                    console.error('Error loading locations:', error);
-                    abp.notify.error(l('ErrorLoadingLocations'));
-                });
-        },
+        ajax: abp.libs.datatables.createAjax(
+            easyshifthq.locations.location.getList,
+            function (data) {
+                return {
+                    filter: data.search.value,
+                    sorting: data.order[0] ? data.columns[data.order[0].column].data + (data.order[0].dir === 'desc' ? ' desc' : '') : null,
+                    maxResultCount: data.length,
+                    skipCount: data.start
+                };
+            }
+        ),
         columns: [
-            {
-                title: l('LocationName'),
-                data: "name"
+            { 
+                data: 'name',
+                title: l('LocationName')
             },
-            {
-                title: l('LocationAddress'),
-                data: "address"
+            { 
+                data: 'address',
+                title: l('LocationAddress')
             },
-            {
-                title: l('LocationTimeZone'),
-                data: "timeZone"
+            { 
+                data: 'timeZone',
+                title: l('LocationTimeZone')
             },
-            {
-                title: l('LocationJurisdictionCode'),
-                data: "jurisdictionCode"
+            { 
+                data: 'jurisdictionCode',
+                title: l('LocationJurisdictionCode')
             },
-            {
+            { 
+                data: 'isActive',
                 title: l('LocationIsActive'),
-                data: "isActive",
                 render: function (data) {
-                    return `<span class="badge badge-${data ? 'success' : 'danger'}">${data ? 'Active' : 'Inactive'}</span>`;
+                    return data ? 
+                        '<span class="badge bg-success">' + l('Yes') + '</span>' : 
+                        '<span class="badge bg-danger">' + l('No') + '</span>';
                 }
             },
             {
+                data: null,
                 title: l('Actions'),
                 orderable: false,
                 render: function(data, type, row) {
@@ -122,6 +120,8 @@ $(function () {
                 abp.notify.error(l('ErrorUpdatingLocation'));
             });
     };
+
+    // Handle filter changes
 
     createModal.onResult(function () {
         dataTable.ajax.reload();

@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Application.Services;
 using easyshifthq.Permissions;
+using Volo.Abp.Application.Dtos;
+using Volo.Abp.Linq;
 
 namespace easyshifthq.Locations;
 
@@ -12,10 +14,14 @@ namespace easyshifthq.Locations;
 public class LocationAppService : ApplicationService, ILocationAppService
 {
     private readonly ILocationRepository _locationRepository;
+    private readonly IAsyncQueryableExecuter _asyncExecuter;
 
-    public LocationAppService(ILocationRepository locationRepository)
+    public LocationAppService(
+        ILocationRepository locationRepository,
+        IAsyncQueryableExecuter asyncExecuter)
     {
         _locationRepository = locationRepository;
+        _asyncExecuter = asyncExecuter;
     }
 
     public async Task<LocationDto> GetAsync(Guid id)
@@ -24,10 +30,23 @@ public class LocationAppService : ApplicationService, ILocationAppService
         return ObjectMapper.Map<Location, LocationDto>(location);
     }
 
-    public async Task<List<LocationDto>> GetListAsync()
+    public async Task<PagedResultDto<LocationDto>> GetListAsync(GetLocationListDto input)
     {
-        var locations = await _locationRepository.GetListAsync();
-        return ObjectMapper.Map<List<Location>, List<LocationDto>>(locations);
+        var (items, totalCount) = await _locationRepository.GetListAsync(
+            filter: input.Filter,
+            isActive: input.IsActive,
+            timeZone: input.TimeZone,
+            jurisdictionCode: input.JurisdictionCode,
+            sorting: input.Sorting,
+            skipCount: input.SkipCount,
+            maxResultCount: input.MaxResultCount
+        );
+
+        return new PagedResultDto<LocationDto>
+        {
+            TotalCount = totalCount,
+            Items = ObjectMapper.Map<List<Location>, List<LocationDto>>(items),
+        };
     }
 
     public async Task<List<LocationDto>> GetActiveLocationsAsync()
