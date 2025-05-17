@@ -4,6 +4,7 @@ using System.Linq;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
 using easyshifthq.Locations;
+using Volo.Abp;
 
 namespace easyshifthq.Invitations;
 
@@ -59,14 +60,18 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public void Accept()
     {
-        if (IsExpired())
+        // Validate current state
+        if (Status != InvitationStatus.Pending)
         {
             throw new InvalidOperationException("Invitation has expired.");
         }
-        if (Status != InvitationStatus.Pending)
+
+        if (IsExpired())
         {
             throw new InvalidOperationException("Invitation has already been accepted or revoked.");
         }
+
+        // Update status
         Status = InvitationStatus.Accepted;
     }
 
