@@ -31,8 +31,6 @@
     "InvitationResent": "Invitation has been resent successfully",
     "InvitationRevoked": "Invitation has been revoked",
     "InvitationRevocationConfirmMessage": "Are you sure you want to revoke the invitation for {0}?",
-    "TeamMembers": "Team Members",
-    "InviteTeamMember": "Invite Team Member",
     "UserAlreadyExists": "User already exists",
     "PendingInvitationExists": "A pending invitation already exists for this email",
     "InvitationNotPending": "The invitation is not pending",

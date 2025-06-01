@@ -30,8 +30,8 @@ public class BulkCreateModalModel : easyshifthqPageModel
     [BindProperty]
     public IFormFile? CsvFile { get; set; }
 
-    public required List<SelectListItem> Roles { get; set; }
-    public required List<SelectListItem> Locations { get; set; }
+    public List<SelectListItem> Roles { get; set; }
+    public List<SelectListItem> Locations { get; set; }
 
     public BulkCreateModalModel(
         IInvitationAppService invitationAppService,
@@ -40,9 +40,9 @@ public class BulkCreateModalModel : easyshifthqPageModel
         _invitationAppService = invitationAppService;
         _locationAppService = locationAppService;
         
-        // Initialize empty lists
-        Roles = new();
-        Locations = new();
+        // Initialize lists
+        Roles = new List<SelectListItem>();
+        Locations = new List<SelectListItem>();
     }
 
     public async Task OnGetAsync()

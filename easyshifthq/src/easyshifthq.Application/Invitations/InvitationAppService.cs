@@ -100,6 +100,12 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
         return ObjectMapper.Map<List<Invitation>, List<InvitationDto>>(invitations);
     }
 
+    public async Task<List<InvitationDto>> GetAllAsync()
+    {
+        var invitations = await _invitationRepository.GetListAsync();
+        return ObjectMapper.Map<List<Invitation>, List<InvitationDto>>(invitations);
+    }
+
     [UnitOfWork]
     public virtual async Task<InvitationDto> AcceptAsync(Guid id)
     {

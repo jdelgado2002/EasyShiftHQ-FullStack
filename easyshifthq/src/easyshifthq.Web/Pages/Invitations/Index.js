@@ -13,7 +13,7 @@ $(function () {
         searching: true,
         ajax: function(data, callback, settings) {
             console.log('Making AJAX request...');
-            invitationService.getPending()
+            invitationService.getAll()
                 .then(function(result) {
                     console.log('Received data:', result);
                     callback({

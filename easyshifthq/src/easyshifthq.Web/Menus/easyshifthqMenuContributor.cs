@@ -35,18 +35,6 @@ public class easyshifthqMenuContributor : IMenuContributor
             )
         );
 
-        // Team Management
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Team",
-                l["TeamMembers"],
-                url: "/Team",
-                icon: "fas fa-users",
-                order: 2,
-                requiredPermissionName: easyshifthqPermissions.TeamManagement.Default
-            )
-        );
-
         // Add Invitations menu item
         context.Menu.AddItem(
             new ApplicationMenuItem(
