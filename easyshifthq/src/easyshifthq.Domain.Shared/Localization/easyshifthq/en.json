@@ -57,7 +57,6 @@
     "Permission:Locations.Edit": "Edit locations",
     "Permission:Locations.Delete": "Delete locations",
     "Permission:Locations.ManageActivity": "Manage location activity status",
-    "Location": "Location",
     "LocationName": "Name",
     "LocationAddress": "Address",
     "LocationTimeZone": "Time Zone",
