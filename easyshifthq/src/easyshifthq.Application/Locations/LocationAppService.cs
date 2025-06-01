@@ -14,14 +14,10 @@ namespace easyshifthq.Locations;
 public class LocationAppService : ApplicationService, ILocationAppService
 {
     private readonly ILocationRepository _locationRepository;
-    private readonly IAsyncQueryableExecuter _asyncExecuter;
 
-    public LocationAppService(
-        ILocationRepository locationRepository,
-        IAsyncQueryableExecuter asyncExecuter)
+    public LocationAppService(ILocationRepository locationRepository)
     {
         _locationRepository = locationRepository;
-        _asyncExecuter = asyncExecuter;
     }
 
     public async Task<LocationDto> GetAsync(Guid id)

@@ -3,10 +3,15 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using easyshifthq.Locations;
 using Volo.Abp.ObjectMapping;
+using Volo.Abp;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
+using easyshifthq.Permissions;
 
 namespace easyshifthq.Web.Pages.Locations;
 
 [ValidateAntiForgeryToken]
+[Authorize(LocationPermissions.Locations.Edit)]
 public class EditModalModel : easyshifthqPageModel
 {
     [HiddenInput]
@@ -27,15 +32,45 @@ public class EditModalModel : easyshifthqPageModel
         _objectMapper = objectMapper;
     }
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
         var location = await _locationAppService.GetAsync(Id);
-        Location = _objectMapper.Map<LocationDto, CreateUpdateLocationDto>(location);
+        if (location == null)
+        {
+            return NotFound();
+        }
+
+        var mappedLocation = _objectMapper.Map<LocationDto, CreateUpdateLocationDto>(location);
+        if (mappedLocation == null)
+        {
+            throw new UserFriendlyException(L["Error.Mapping.Failed"]);
+        }
+
+        Location = mappedLocation;
+        return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        await _locationAppService.UpdateAsync(Id, Location);
-        return NoContent();
+
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return Page();
+            }
+            if (Location == null)
+            {
+                throw new UserFriendlyException(L["Error.Mapping.Failed"]);
+            }
+            await _locationAppService.UpdateAsync(Id, Location);
+            return NoContent();
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError(ex, "Failed to update location with ID {LocationId}", Id);
+
+            return BadRequest();
+        }
     }
 }

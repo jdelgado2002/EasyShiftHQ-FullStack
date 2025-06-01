@@ -1,9 +1,12 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using easyshifthq.Locations;
+using Microsoft.AspNetCore.Authorization;
+using easyshifthq.Permissions;
 
 namespace easyshifthq.Web.Pages.Locations;
 
+[Authorize(LocationPermissions.Locations.Create)]
 public class CreateModalModel : easyshifthqPageModel
 {
     [BindProperty]
