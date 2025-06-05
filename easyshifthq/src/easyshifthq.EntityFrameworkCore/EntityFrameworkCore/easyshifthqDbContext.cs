@@ -31,7 +31,6 @@ public class EasyshifthqDbContext :
 
     public DbSet<Invitation> Invitations { get; set; }
     public DbSet<Location> Locations { get; set; }
-    public DbSet<InvitationLocation> InvitationLocations { get; set; }
 
     #region Entities from the modules
 
@@ -98,12 +97,6 @@ public class EasyshifthqDbContext :
             b.Property(x => x.TokenHash).IsRequired();
             
             b.HasIndex(x => x.Email);
-
-            b.HasMany(x => x.InvitationLocations)
-             .WithOne(x => x.Invitation)
-             .HasForeignKey(x => x.InvitationId)
-             .IsRequired()
-             .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Location>(b =>
@@ -120,20 +113,6 @@ public class EasyshifthqDbContext :
             b.HasIndex(x => x.Name);
             b.HasIndex(x => x.TimeZone);
             b.HasIndex(x => x.JurisdictionCode);
-
-            b.HasMany<InvitationLocation>()
-             .WithOne(x => x.Location)
-             .HasForeignKey(x => x.LocationId)
-             .IsRequired()
-             .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<InvitationLocation>(b =>
-        {
-            b.ToTable(easyshifthqConsts.DbTablePrefix + "InvitationLocations", easyshifthqConsts.DbSchema);
-            b.ConfigureByConvention();
-            
-            b.HasKey(x => new { x.InvitationId, x.LocationId });
         });
     }
 }
