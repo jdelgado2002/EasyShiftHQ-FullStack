@@ -83,7 +83,7 @@ public class LocationAppService : ApplicationService, ILocationAppService
     public async Task<LocationDto> UpdateAsync(Guid id, CreateUpdateLocationDto input)
     {
         var location = await _locationRepository.GetAsync(id);
-        
+
         location.Update(
             input.Name,
             input.Address,
@@ -106,7 +106,10 @@ public class LocationAppService : ApplicationService, ILocationAppService
     public async Task SetActiveAsync(Guid id, bool isActive)
     {
         var location = await _locationRepository.GetAsync(id);
-        location.SetActive(isActive);
-        await _locationRepository.UpdateAsync(location);
+        if (location.IsActive != isActive)
+        {
+            location.SetActive(isActive);
+            await _locationRepository.UpdateAsync(location, autoSave: true);
+        }
     }
 }

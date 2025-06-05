@@ -28,12 +28,21 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/easyshifthq/src/easyshifthq.HttpApi/bin/Debug/net9.0/easyshifthq.HttpApi.dll",
+            "program": "${workspaceFolder}/easyshifthq/src/easyshifthq.Web/bin/Debug/net9.0/easyshifthq.Web.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/easyshifthq/src/easyshifthq.HttpApi",
+            "cwd": "${workspaceFolder}/easyshifthq/src/easyshifthq.Web",
             "stopAtEntry": false,
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+                "uriFormat": "%s/swagger"
+            },
             "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "https://localhost:44388"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/easyshifthq/src/easyshifthq.Web/Views"
             }
         }
     ],

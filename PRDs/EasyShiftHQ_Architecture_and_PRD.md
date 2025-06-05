@@ -118,6 +118,18 @@ src/
 * `POST /api/v1/shift-trades`: Initiate trade
 * `POST /api/v1/availability`: Submit availability
 
+### Location API
+
+* `GET /app/location/{id}`: Retrieve location details by ID
+* `PUT /app/location/{id}`: Update location details
+* `DELETE /app/location/{id}`: Remove a location
+* `GET /app/location`: List all locations
+* `POST /app/location`: Create a new location
+* `GET /app/location/active-locations`: Get list of active locations
+* `GET /app/location/locations-in-jurisdiction`: Get locations by jurisdiction
+* `GET /app/location/locations-by-time-zone`: Get locations grouped by timezone
+* `POST /app/location/{id}/set-active`: Set location active status
+
 ## Data Models
 
 Key Entities:

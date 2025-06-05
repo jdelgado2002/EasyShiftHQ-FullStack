@@ -14,17 +14,12 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public string FirstName { get; private set; }
     public string LastName { get; private set; }
     public string Role { get; private set; }
-    public Guid? LocationId { get; private set; }
     public string TokenHash { get; private set; }
     public DateTime ExpiresAt { get; private set; }
     public InvitationStatus Status { get; private set; }
     public Guid? TenantId { get; set; }
     public ICollection<InvitationLocation> InvitationLocations { get; private set; }
 
-    /// <summary>
-    /// Private constructor for EF Core entity materialization.
-    /// Required for EF Core to create instances when loading from the database.
-    /// </summary>
     private Invitation() 
     { 
         Email = string.Empty;
@@ -41,7 +36,6 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
         string firstName,
         string lastName,
         string role,
-        Guid? locationId,
         string tokenHash,
         Guid? tenantId = null)
         : base(id)
@@ -50,7 +44,6 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
         FirstName = firstName;
         LastName = lastName;
         Role = role;
-        LocationId = locationId;
         TokenHash = tokenHash;
         Status = InvitationStatus.Pending;
         ExpiresAt = DateTime.UtcNow.AddDays(7);
@@ -106,6 +99,7 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
         }
         TokenHash = tokenHash;
     }
+
     public void SetExpiresAt(DateTime expiresAt)
     {
         if (expiresAt <= DateTime.UtcNow)
@@ -122,18 +116,7 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
         }
         ExpiresAt = expiresAt;
     }
-    public void SetLocationId(Guid? locationId)
-    {
-        if (locationId == null)
-        {
-            throw new ArgumentNullException(nameof(locationId), "Location ID cannot be null.");
-        }
-        if (locationId == Guid.Empty)
-        {
-            throw new ArgumentException("Location ID cannot be an empty GUID.", nameof(locationId));
-        }
-        LocationId = locationId;
-    }
+
     public void SetStatus(InvitationStatus status)
     {
         if (status == InvitationStatus.Accepted && Status != InvitationStatus.Pending)
@@ -149,6 +132,11 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public void AddLocation(Guid locationId)
     {
+        if (locationId == Guid.Empty)
+        {
+            throw new ArgumentException("Location ID cannot be an empty GUID.", nameof(locationId));
+        }
+
         if (InvitationLocations.Any(x => x.LocationId == locationId))
         {
             return;

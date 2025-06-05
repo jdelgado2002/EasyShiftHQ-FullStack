@@ -7,16 +7,18 @@ public class CreateUpdateLocationDto
     [Required]
     [StringLength(128)]
     public string Name { get; set; }
-    
+
     [Required]
+    [StringLength(500)]
     public string Address { get; set; }
-    
+
     [Required]
+    [StringLength(50)]
     public string TimeZone { get; set; }
     
-    [StringLength(50)]
+    [MaxLength(LocationConsts.MaxJurisdictionCodeLength)]
     public string? JurisdictionCode { get; set; }
     
-    [StringLength(500)]
+    [MaxLength(LocationConsts.MaxNotesLength)]
     public string? Notes { get; set; }
 }
