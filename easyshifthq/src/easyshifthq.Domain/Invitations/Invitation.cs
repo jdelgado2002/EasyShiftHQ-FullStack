@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Volo.Abp.Domain.Entities.Auditing;
 using Volo.Abp.MultiTenancy;
+using easyshifthq.Locations;
+using Volo.Abp;
 
 namespace easyshifthq.Invitations;
 
@@ -16,7 +20,18 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
     public InvitationStatus Status { get; private set; }
     public Guid? TenantId { get; set; }
 
-    private Invitation() { } // For EF Core
+    /// <summary>
+    /// Private constructor for EF Core entity materialization.
+    /// Required for EF Core to create instances when loading from the database.
+    /// </summary>
+    private Invitation() 
+    { 
+        Email = string.Empty;
+        FirstName = string.Empty;
+        LastName = string.Empty;
+        Role = string.Empty;
+        TokenHash = string.Empty;
+    }
 
     public Invitation(
         Guid id,
@@ -42,14 +57,18 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
 
     public void Accept()
     {
-        if (IsExpired())
+        // Validate current state
+        if (Status != InvitationStatus.Pending)
         {
             throw new InvalidOperationException("Invitation has expired.");
         }
-        if (Status != InvitationStatus.Pending)
+
+        if (IsExpired())
         {
             throw new InvalidOperationException("Invitation has already been accepted or revoked.");
         }
+
+        // Update status
         Status = InvitationStatus.Accepted;
     }
 
@@ -124,4 +143,5 @@ public class Invitation : FullAuditedAggregateRoot<Guid>, IMultiTenant
         }
         Status = status;
     }
+
 }

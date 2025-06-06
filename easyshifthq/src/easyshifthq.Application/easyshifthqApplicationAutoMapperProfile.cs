@@ -10,5 +10,7 @@ public class easyshifthqApplicationAutoMapperProfile : Profile
     {
         CreateMap<Invitation, InvitationDto>();
         CreateMap<Location, LocationDto>();
+        CreateMap<CreateUpdateLocationDto, Location>();
+        CreateMap<LocationDto, CreateUpdateLocationDto>();
     }
 }

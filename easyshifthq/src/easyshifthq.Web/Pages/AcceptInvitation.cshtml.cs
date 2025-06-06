@@ -7,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Volo.Abp;
 using Volo.Abp.Identity;
 using easyshifthq.Invitations;
+using Volo.Abp.Uow;
+using System.Linq;
 
 namespace easyshifthq.Web.Pages;
 
@@ -67,6 +69,7 @@ public class AcceptInvitationModel : easyshifthqPageModel
         }
     }
 
+    [UnitOfWork]
     public async Task<IActionResult> OnPostAsync()
     {
         try
@@ -82,29 +85,36 @@ public class AcceptInvitationModel : easyshifthqPageModel
             // Create user
             var user = new Volo.Abp.Identity.IdentityUser(GuidGenerator.Create(), invitation.Email, invitation.Email, CurrentTenant.Id);
 
-            // For non-SSO setup, set the password
+            // Create the user with appropriate handling
+            IdentityResult createResult;
             if (!IsSSOEnabled)
             {
                 if (string.IsNullOrEmpty(Password))
                 {
                     throw new UserFriendlyException(L["PasswordRequired"]);
                 }
-                await _userManager.CreateAsync(user, Password);
+                createResult = await _userManager.CreateAsync(user, Password);
             }
             else
             {
-                await _userManager.CreateAsync(user);
+                createResult = await _userManager.CreateAsync(user);
             }
 
-            // Assign role - normalize the role name to match our seeded roles
-            var normalizedRole = invitation.Role.ToUpperInvariant();
-            var result = await _userManager.AddToRoleAsync(user, normalizedRole);
-            if (!result.Succeeded)
+            if (!createResult.Succeeded)
             {
+                throw new UserFriendlyException(L["UserCreationFailed"] + ": " + string.Join(", ", createResult.Errors.Select(e => e.Description)));
+            }
+
+            // Now that we have a valid user, add the role
+            var roleResult = await _userManager.AddToRoleAsync(user, invitation.Role);
+            if (!roleResult.Succeeded)
+            {
+                // If role assignment fails, clean up by deleting the user
+                await _userManager.DeleteAsync(user);
                 throw new UserFriendlyException(L["RoleAssignmentFailed", invitation.Role]);
             }
 
-            // Accept invitation
+            // Accept invitation only after user and role are successfully created
             await _invitationAppService.AcceptAsync(invitation.Id);
 
             // Sign in the user

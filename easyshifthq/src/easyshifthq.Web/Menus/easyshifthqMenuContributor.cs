@@ -20,7 +20,7 @@ public class easyshifthqMenuContributor : IMenuContributor
         }
     }
 
-    private static Task ConfigureMainMenuAsync(MenuConfigurationContext context)
+    private static async Task ConfigureMainMenuAsync(MenuConfigurationContext context)
     {
         var l = context.GetLocalizer<easyshifthqResource>();
 
@@ -35,18 +35,6 @@ public class easyshifthqMenuContributor : IMenuContributor
             )
         );
 
-        // Team Management
-        context.Menu.AddItem(
-            new ApplicationMenuItem(
-                "Team",
-                l["TeamMembers"],
-                url: "/Team",
-                icon: "fas fa-users",
-                order: 2,
-                requiredPermissionName: easyshifthqPermissions.TeamManagement.Default
-            )
-        );
-
         // Add Invitations menu item
         context.Menu.AddItem(
             new ApplicationMenuItem(
@@ -57,6 +45,20 @@ public class easyshifthqMenuContributor : IMenuContributor
                 order: 3
             )
         );
+
+        // Add Location menu item
+        if (await context.IsGrantedAsync(LocationPermissions.Locations.Default))
+        {
+            context.Menu.AddItem(
+                new ApplicationMenuItem(
+                    "Location",
+                    l["LocationManagement"],
+                    url: "/Locations",
+                    icon: "fas fa-map-marker-alt",
+                    order: 4
+                )
+            );
+        }
 
         //Administration
         var administration = context.Menu.GetAdministration();
@@ -75,7 +77,5 @@ public class easyshifthqMenuContributor : IMenuContributor
         }
         
         administration.SetSubItemOrder(SettingManagementMenuNames.GroupName, 3);
-
-        return Task.CompletedTask;
     }
 }

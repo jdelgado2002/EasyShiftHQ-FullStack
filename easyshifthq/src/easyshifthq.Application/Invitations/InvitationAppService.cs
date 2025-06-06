@@ -11,6 +11,7 @@ using Volo.Abp.Application.Services;
 using System.Net;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.Emailing;
+using Volo.Abp.Uow;
 
 namespace easyshifthq.Invitations;
 
@@ -99,23 +100,18 @@ public class InvitationAppService : ApplicationService, IInvitationAppService
         return ObjectMapper.Map<List<Invitation>, List<InvitationDto>>(invitations);
     }
 
-    public async Task<InvitationDto> AcceptAsync(Guid id)
+    public async Task<List<InvitationDto>> GetAllAsync()
+    {
+        var invitations = await _invitationRepository.GetListAsync();
+        return ObjectMapper.Map<List<Invitation>, List<InvitationDto>>(invitations);
+    }
+
+    [UnitOfWork]
+    public virtual async Task<InvitationDto> AcceptAsync(Guid id)
     {
         var invitation = await _invitationRepository.GetAsync(id);
-        
-        if (invitation.Status != InvitationStatus.Pending)
-        {
-            throw new UserFriendlyException(L["InvitationNotPending"]);
-        }
-
-        if (invitation.IsExpired())
-        {
-            throw new UserFriendlyException(L["InvitationExpired"]);
-        }
-
-        invitation.Accept();
+        invitation.Accept(); // This will throw domain exceptions if invalid
         await _invitationRepository.UpdateAsync(invitation);
-
         return ObjectMapper.Map<Invitation, InvitationDto>(invitation);
     }
 

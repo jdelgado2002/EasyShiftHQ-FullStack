@@ -1,0 +1,51 @@
+@page
+@using easyshifthq.Localization
+@using easyshifthq.Permissions
+@using easyshifthq.Web.Pages.Locations
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Volo.Abp.AspNetCore.Mvc.UI.Bootstrap.TagHelpers.Modal
+@using Volo.Abp.AspNetCore.Mvc.UI.Layout
+@model easyshifthq.Web.Pages.Locations.IndexModel
+@inject IAuthorizationService AuthorizationService
+@inject IHtmlLocalizer<easyshifthqResource> L
+@{
+    ViewData["Title"] = L["Locations"].Value;
+}
+
+@section scripts {
+    <abp-script src="/Pages/Locations/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <h2>@L["Locations"]</h2>
+            </abp-column>
+            <abp-column size-md="_6" class="text-end">
+                @if (await AuthorizationService.IsGrantedAsync(LocationPermissions.Locations.Create))
+                {
+                    <abp-button id="NewLocationButton"
+                               text="@L["NewLocation"].Value"
+                               icon="plus"
+                               button-type="Primary" />
+                }
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <abp-table striped-rows="true" id="LocationsTable">
+            <thead>
+                <tr>
+                    <th id="LocationName" abp-scope="col">@L["LocationName"]</th>
+                    <th id="LocationAddress" abp-scope="col">@L["LocationAddress"]</th>
+                    <th id="LocationTimezone" abp-scope="col">@L["LocationTimeZone"]</th>
+                    <th id="LocationJurisdictionCode" abp-scope="col">@L["LocationJurisdictionCode"]</th>
+                    <th id="LocationIsActive" abp-scope="col">@L["LocationIsActive"]</th>
+                    <th id="Actions" abp-scope="col">@L["Actions"]</th>
+                </tr>
+            </thead>
+        </abp-table>
+    </abp-card-body>
+</abp-card>
