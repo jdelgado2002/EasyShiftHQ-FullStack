@@ -1,9 +1,9 @@
 $(function () {
-    var l = abp.localization.getResource('easyshifthq');
-    var createModal = new abp.ModalManager(abp.appPath + 'Locations/CreateModal');
-    var editModal = new abp.ModalManager(abp.appPath + 'Locations/EditModal');
+    const l = abp.localization.getResource('easyshifthq');
+    let createModal = new abp.ModalManager(abp.appPath + 'Locations/CreateModal');
+    let editModal = new abp.ModalManager(abp.appPath + 'Locations/EditModal');
 
-    var dataTable = $('#LocationsTable').DataTable({
+    let dataTable = $('#LocationsTable').DataTable({
         processing: true,
         serverSide: true,
         paging: true,
@@ -52,7 +52,7 @@ $(function () {
                 title: l('Actions'),
                 orderable: false,
                 render: function(data, type, row) {
-                    var actions = '';
+                    let actions = '';
                     
                     if (abp.auth.isGranted('Location.Edit')) {
                         actions += `
