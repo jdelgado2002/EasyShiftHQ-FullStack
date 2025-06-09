@@ -1,0 +1,88 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@using easyshifthq.Permissions
+@using easyshifthq.Web.Pages.Availabilities
+@model easyshifthq.Web.Pages.Availabilities.TimeOffRequestsModel
+@{
+    ViewData["Title"] = "Time Off Requests";
+}
+
+@section styles {
+    <link rel="stylesheet" href="~/libs/bootstrap-datepicker/css/bootstrap-datepicker.min.css" />
+    <style>
+        .time-off-form {
+            border-right: 1px solid #dee2e6;
+        }
+        @@media (max-width: 767.98px) {
+            .time-off-form {
+                border-right: none;
+                border-bottom: 1px solid #dee2e6;
+                padding-bottom: 2rem;
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
+}
+
+@section scripts {
+    <abp-script src="/libs/bootstrap-datepicker/js/bootstrap-datepicker.min.js" />
+    <abp-script src="/Pages/Availabilities/TimeOffRequests.js" />
+}
+
+<div class="container">
+    <abp-card>
+        <abp-card-header>
+            <abp-card-title>@ViewData["Title"]</abp-card-title>
+        </abp-card-header>
+        <abp-card-body>
+            <div class="row">
+                <div class="col-md-5 time-off-form">
+                    <h4>Request Time Off</h4>
+                    <p class="text-muted mb-4">
+                        Submit a request for time off by providing the dates and reason.
+                    </p>
+                    
+                    <input type="hidden" id="employeeId" value="@Model.CurrentUserId" />
+                    
+                    <form id="TimeOffRequestForm">
+                        <div class="mb-3">
+                            <label class="form-label" for="startDate">Start Date</label>
+                            <input type="text" class="form-control" id="startDate" name="startDate" required />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label" for="endDate">End Date</label>
+                            <input type="text" class="form-control" id="endDate" name="endDate" required />
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label" for="reason">Reason (Optional)</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-paper-plane"></i> Submit Request
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="col-md-7">
+                    <h4>Your Pending Requests</h4>
+                    <div id="timeOffRequestsContainer">
+                        <!-- Time off requests will be loaded by JavaScript -->
+                        <div class="text-center py-5">
+                            <span class="spinner-border text-primary" role="status"></span>
+                            <p class="mt-2">Loading requests...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="@Url.Page("./WeeklyAvailability")" class="btn btn-outline-primary">
+                            <i class="fa fa-clock"></i> Manage Weekly Schedule
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </abp-card-body>
+    </abp-card>
+</div>

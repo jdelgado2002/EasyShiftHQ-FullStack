@@ -4,6 +4,7 @@
 	"private": true,
 	"dependencies": {
 		"@abp/aspnetcore.mvc.ui.theme.leptonxlite": "~4.1.0",
-		"luxon": "^3.6.1"
+		"luxon": "^3.6.1",
+		"timepicker": "^1.11.14"
 	}
 }

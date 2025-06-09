@@ -1,0 +1,53 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@using easyshifthq.Permissions
+@using easyshifthq.Web.Pages.Availabilities
+@model easyshifthq.Web.Pages.Availabilities.WeeklyAvailabilityModel
+@{
+    ViewData["Title"] = "Weekly Availability";
+}
+
+@section styles {
+    <link rel="stylesheet" href="~/libs/timepicker/jquery.timepicker.min.css" />
+    <style>
+        .weekly-availability-row {
+            transition: all 0.3s ease;
+        }
+        .weekly-availability-row:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+}
+
+@section scripts {
+    <abp-script src="/libs/timepicker/jquery.timepicker.min.js" />
+    <abp-script src="/Pages/Availabilities/WeeklyAvailability.js" />
+}
+
+<div class="container">
+    <abp-card>
+        <abp-card-header>
+            <abp-card-title>@ViewData["Title"]</abp-card-title>
+        </abp-card-header>
+        <abp-card-body>
+            <p class="text-muted mb-4">
+                Set your weekly availability schedule by indicating which days you're available and during what hours.
+            </p>
+            
+            <input type="hidden" id="employeeId" value="@Model.CurrentUserId" />
+            
+            <div id="weeklyAvailabilityContainer" class="mb-4">
+                <!-- Weekly availability rows will be populated by JavaScript -->
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <button id="SaveAllWeeklyAvailability" class="btn btn-primary">
+                    <i class="fa fa-save"></i> Save All
+                </button>
+                <a href="@Url.Page("./TimeOffRequests")" class="btn btn-outline-primary">
+                    <i class="fa fa-calendar-alt"></i> Manage Time Off
+                </a>
+            </div>
+        </abp-card-body>
+    </abp-card>
+</div>

@@ -1,0 +1,48 @@
+@page
+@using easyshifthq.Localization
+@using easyshifthq.Web.Pages.Availabilities
+@using Microsoft.AspNetCore.Mvc.Localization
+@model EmployeeListModel
+@inject IHtmlLocalizer<easyshifthqResource> L
+@{
+    ViewData["Title"] = L["EmployeeList"].Value;
+}
+
+@section scripts {
+    <abp-script src="/Pages/Availabilities/EmployeeList.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <h2><i class="fas fa-users-cog me-2"></i>@L["EmployeeList"]</h2>
+        <p class="text-muted mb-0">@L["SelectEmployee"] @L["ViewAvailability"]</p>
+    </abp-card-header>
+    <abp-card-body>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" class="form-control" id="employeeSearch" placeholder="@L["SearchEmployees"]">
+                </div>
+            </div>
+        </div>
+        
+        <div id="loadingSpinner" class="text-center py-4" style="display: none;">
+            <div class="spinner-border text-primary">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <output class="mt-2 text-muted d-block">@L["LoadingEmployees"]</output>
+        </div>
+
+        <div id="employeeListContainer">
+            <div class="row" id="employeeCards">
+                <!-- Employee cards will be populated here by JavaScript -->
+            </div>
+        </div>
+
+        <div id="noEmployeesMessage" class="text-center py-4" style="display: none;">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">@L["NoEmployeesFound"]</h5>
+        </div>
+    </abp-card-body>
+</abp-card>
