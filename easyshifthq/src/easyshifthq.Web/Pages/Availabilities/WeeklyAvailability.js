@@ -166,33 +166,38 @@ function loadEmployeeWeeklyAvailability() {
         });
 }
 
-// Format time string from backend (e.g. "PT08H30M") to "08:30"
+// Format time string from backend (HH:mm:ss) to HH:mm
 function formatTime(timeString) {
     if (!timeString) return '';
     
-    // If already formatted as HH:MM, return as is
-    if (timeString.match(/^\d{1,2}:\d{2}$/)) {
+    // If in HH:mm:ss format, convert to HH:mm
+    if (timeString.match(/^\d{2}:\d{2}:\d{2}$/)) {
+        return timeString.substring(0, 5);
+    }
+    
+    // If already in HH:mm format, return as is
+    if (timeString.match(/^\d{2}:\d{2}$/)) {
         return timeString;
     }
     
-    // Extract hours and minutes from ISO 8601 duration format
-    const hourMatch = timeString.match(/(\d+)H/);
-    const minuteMatch = timeString.match(/(\d+)M/);
-    
-    const hours = hourMatch ? parseInt(hourMatch[1]).toString().padStart(2, '0') : '00';
-    const minutes = minuteMatch ? parseInt(minuteMatch[1]).toString().padStart(2, '0') : '00';
-    
-    return `${hours}:${minutes}`;
+    return '';
 }
 
-// Parse time string from "08:30" format to duration format
+// Parse time string from HH:mm format to HH:mm:ss for API
 function parseTime(timeString) {
     if (!timeString) return null;
     
-    var parts = timeString.split(':');
-    if (parts.length !== 2) return null;
+    // If already in HH:mm:ss format, return as is
+    if (timeString.match(/^\d{2}:\d{2}:\d{2}$/)) {
+        return timeString;
+    }
     
-    return `PT${parts[0]}H${parts[1]}M`;
+    // If in HH:mm format, add seconds
+    if (timeString.match(/^\d{2}:\d{2}$/)) {
+        return timeString + ':00';
+    }
+    
+    return null;
 }
 
 // Save all weekly availability entries
@@ -215,23 +220,25 @@ function saveAllWeeklyAvailability() {
         var endTimeVal = row.find('.end-time').val();
         
         console.log('Raw time values:', { startTimeVal, endTimeVal });
-        console.log('Parsed time values:', { 
-            startTime: formatTime(startTimeVal), 
-            endTime: formatTime(endTimeVal) 
-        });
         
         var data = {
             dayOfWeek: dayOfWeek,
             isAvailable: isChecked,
-            startTime: formatTime(startTimeVal),
-            endTime: formatTime(endTimeVal)
+            startTime: isChecked ? parseTime(startTimeVal) : null,
+            endTime: isChecked ? parseTime(endTimeVal) : null
         };
+        
+        console.log('Sending data:', data);
         
         // If we have an existing record, update it
         if (existingId) {
             promises.push(
                 easyshifthq.availabilities.availability
                     .updateWeeklyAvailability(existingId, data)
+                    .catch(function(error) {
+                        console.error('Failed to update availability:', error);
+                        throw error;
+                    })
             );
         }
         // Otherwise create a new record if available
@@ -239,6 +246,10 @@ function saveAllWeeklyAvailability() {
             promises.push(
                 easyshifthq.availabilities.availability
                     .submitWeeklyAvailability(data)
+                    .catch(function(error) {
+                        console.error('Failed to submit availability:', error);
+                        throw error;
+                    })
             );
         }
     });
@@ -255,6 +266,77 @@ function saveAllWeeklyAvailability() {
         })
         .catch(function(error) {
             abp.notify.error('Failed to save availability data');
-            console.error(error);
+            console.error('Save error:', error);
+        });
+}
+
+function loadSlots() {
+    easyshifthq.availabilities.weeklyAvailabilities
+        .getList()
+        .then((result) => {
+            result.items.forEach((slot) => {
+                const day = days[slot.dayOfWeek].toLowerCase();
+                $(`#${day}Start`).val(formatTime(slot.startTime));
+                $(`#${day}End`).val(formatTime(slot.endTime));
+            });
+        })
+        .catch((error) => {
+            console.error('Error loading slots:', error);
+            abp.notify.error(l('ErrorLoadingSlots'));
+        });
+}
+
+function save() {
+    const slots = [];
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    let hasValidationError = false;
+
+    for (const day of days) {
+        const startTimeVal = $(`#${day}Start`).val();
+        const endTimeVal = $(`#${day}End`).val();
+        
+        // Skip if both fields are empty (no availability set)
+        if (!startTimeVal && !endTimeVal) {
+            continue;
+        }
+        
+        // Validate that both times are present if one is filled
+        if (!startTimeVal || !endTimeVal) {
+            abp.notify.warn(l('PleaseEnterBothStartAndEndTimes'));
+            hasValidationError = true;
+            break;
+        }
+        
+        const startTime = parseTime(startTimeVal);
+        const endTime = parseTime(endTimeVal);
+        
+        // Validate time format
+        if (!startTime || !endTime) {
+            abp.notify.warn(l('InvalidTimeFormat'));
+            hasValidationError = true;
+            break;
+        }
+
+        slots.push({
+            dayOfWeek: days.indexOf(day),
+            startTime: startTime,
+            endTime: endTime
+        });
+    }
+
+    if (hasValidationError) {
+        return;
+    }
+
+    // Save the slots
+    easyshifthq.availabilities.weeklyAvailabilities
+        .save(slots)
+        .then(() => {
+            abp.notify.success(l('SavedSuccessfully'));
+            loadSlots(); // Refresh the data
+        })
+        .catch(error => {
+            console.error('Error saving slots:', error);
+            abp.notify.error(l('ErrorSavingSlots'));
         });
 }
