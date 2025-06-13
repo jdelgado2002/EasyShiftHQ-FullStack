@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using easyshifthq.Email;
 using Microsoft.Extensions.Logging;
@@ -21,21 +22,26 @@ public class TimeOffRequestNotificationHandler :
     IDistributedEventHandler<TimeOffDeniedEto>,
     ITransientDependency
 {
+    private const string MANAGER = "MANAGER";
+    private const string ADMIN = "ADMIN";
     private readonly IIdentityUserRepository _userRepository;
     private readonly IEmailSender _emailSender;
     private readonly ILogger<TimeOffRequestNotificationHandler> _logger;
     private readonly ISettingProvider _settingProvider;
+    private readonly IIdentityRoleRepository _roleRepository;
 
     public TimeOffRequestNotificationHandler(
         IIdentityUserRepository userRepository,
         IEmailSender emailSender,
         ILogger<TimeOffRequestNotificationHandler> logger,
-        ISettingProvider settingProvider)
+        ISettingProvider settingProvider,
+        IIdentityRoleRepository roleRepository)
     {
         _userRepository = userRepository;
         _emailSender = emailSender;
         _logger = logger;
         _settingProvider = settingProvider;
+        _roleRepository = roleRepository;
     }
 
     public async Task HandleEventAsync(TimeOffRequestedEto eventData)
@@ -52,24 +58,39 @@ public class TimeOffRequestNotificationHandler :
                 eventData.EndDate,
                 eventData.Reason ?? "Not provided");
 
-            // In a real implementation, we would query actual managers
-            // For now, we'll send to a manager email from settings
-            var managerEmail = await _settingProvider.GetOrNullAsync("App.ManagerEmail") ?? "manager@easyshifthq.com";
+            // Get all users in the manager role
+            var roleids = await _roleRepository.GetListAsync();
+            var managerRole = roleids.FirstOrDefault(r => r.NormalizedName == MANAGER);
+            var adminRole = roleids.FirstOrDefault(r => r.NormalizedName == ADMIN);
+
+            var managers = await _userRepository.GetListAsync();
+            var managersWithEmail = managers
+                .Where(u => !string.IsNullOrEmpty(u.Email) && u.Roles.Any(r => 
+                    (managerRole != null && r.RoleId == managerRole.Id) || 
+                    (adminRole != null && r.RoleId == adminRole.Id)))
+                .ToList();
             
-            // Send email to manager about new time off request
-            await _emailSender.SendAsync(
-                managerEmail,
-                "Time Off Request Needs Approval",
-                $"<h2>New Time Off Request</h2>" +
-                $"<p>Employee: <strong>{eventData.EmployeeName}</strong></p>" +
-                $"<p>Period: <strong>{eventData.StartDate:d} to {eventData.EndDate:d}</strong></p>" +
-                $"<p>Total Days: <strong>{(eventData.EndDate.Date - eventData.StartDate.Date).Days + 1}</strong></p>" +
-                $"<p>Reason: <strong>{(eventData.Reason ?? "Not provided")}</strong></p>" +
-                $"<p>Please review this request in the <a href='https://app.easyshifthq.com/availabilities/manager-view/{eventData.EmployeeId}'>EasyShiftHQ Manager Portal</a>.</p>");
+            // Send email to all managers about new time off request
+            await Task.WhenAll(managersWithEmail.Select(async manager =>
+            {
+                await _emailSender.SendAsync(
+                    manager.Email,
+                    "Time Off Request Needs Approval",
+                    $"<h2>New Time Off Request</h2>" +
+                    $"<p>Employee: <strong>{eventData.EmployeeName}</strong></p>" +
+                    $"<p>Period: <strong>{eventData.StartDate:d} to {eventData.EndDate:d}</strong></p>" +
+                    $"<p>Total Days: <strong>{(eventData.EndDate.Date - eventData.StartDate.Date).Days + 1}</strong></p>" +
+                    $"<p>Reason: <strong>{(eventData.Reason ?? "Not provided")}</strong></p>" +
+                    $"<p>Please review this request in the <a href='https://app.easyshifthq.com/availabilities/manager-view/{eventData.EmployeeId}'>EasyShiftHQ Manager Portal</a>.</p>");
+                
+                _logger.LogInformation(
+                    "Time off request notification sent to manager: {ManagerEmail}",
+                    manager.Email);
+            }));
             
             _logger.LogInformation(
-                "Time off request notification sent to manager: {ManagerEmail}",
-                managerEmail);
+                "Time off request notifications sent to {ManagerCount} managers",
+                managersWithEmail.Count);
         }
         catch (Exception ex)
         {
@@ -88,7 +109,7 @@ public class TimeOffRequestNotificationHandler :
             
             // Get approver's name
             var approver = await _userRepository.GetAsync(eventData.ApproverId);
-            string approverName = approver.Name ?? approver.UserName ?? "Manager";
+            string approverName = approver.Name ?? approver.UserName ?? MANAGER;
 
             // Send approval notification to employee
             await _emailSender.SendAsync(
@@ -120,7 +141,7 @@ public class TimeOffRequestNotificationHandler :
             
             // Get approver's name
             var approver = await _userRepository.GetAsync(eventData.ApproverId);
-            string approverName = approver.Name ?? approver.UserName ?? "Manager";
+            string approverName = approver.Name ?? approver.UserName ?? MANAGER;
 
             // Send denial notification to employee
             await _emailSender.SendAsync(

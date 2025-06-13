@@ -5,23 +5,28 @@ using easyshifthq.Locations;
 
 namespace easyshifthq;
 
-public class easyshifthqApplicationAutoMapperProfile : Profile
+public class EasyshifthqApplicationAutoMapperProfile : Profile
 {
-    public easyshifthqApplicationAutoMapperProfile()
+    public EasyshifthqApplicationAutoMapperProfile()
     {
         CreateMap<Invitation, InvitationDto>();
         CreateMap<Location, LocationDto>();
         CreateMap<CreateUpdateLocationDto, Location>();
         CreateMap<LocationDto, CreateUpdateLocationDto>();
         
-        // Availability mappings with explicit TimeSpan handling
+        // Availability mappings with TimeSpan handling
         CreateMap<Availability, AvailabilityDto>()
+            .ForMember(dest => dest.StartTime, 
+                opts => opts.MapFrom(src => src.StartTime))
+            .ForMember(dest => dest.EndTime,
+                opts => opts.MapFrom(src => src.EndTime));
+                
+        CreateMap<SubmitWeeklyAvailabilityDto, Availability>()
             .ForMember(dest => dest.StartTime,
                 opts => opts.MapFrom(src => src.StartTime))
             .ForMember(dest => dest.EndTime,
                 opts => opts.MapFrom(src => src.EndTime));
                 
-        CreateMap<SubmitWeeklyAvailabilityDto, Availability>();
         CreateMap<SubmitTimeOffRequestDto, Availability>();
     }
 }
