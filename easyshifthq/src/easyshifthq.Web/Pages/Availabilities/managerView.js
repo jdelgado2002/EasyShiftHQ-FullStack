@@ -22,13 +22,16 @@ const easyshifthq = window.easyshifthq || {};
             $('.time-display').each(function() {
                 const timeValue = $(this).data('time');
                 if (timeValue) {
-                    const hourMatch = timeValue.match(/(\d+)H/);
-                    const minuteMatch = timeValue.match(/(\d+)M/);
-                    
-                    const hours = hourMatch ? parseInt(hourMatch[1]).toString().padStart(2, '0') : '00';
-                    const minutes = minuteMatch ? parseInt(minuteMatch[1]).toString().padStart(2, '0') : '00';
-                    
-                    $(this).text(hours + ':' + minutes);
+                    // Handle HH:mm:ss format from API
+                    const match = timeValue.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+                    if (match) {
+                        const hours = match[1];
+                        const minutes = match[2];
+                        $(this).text(`${hours}:${minutes}`);
+                    } else {
+                        console.warn('Invalid time format:', timeValue);
+                        $(this).text(timeValue); // Show original value if format is unexpected
+                    }
                 }
             });
         },

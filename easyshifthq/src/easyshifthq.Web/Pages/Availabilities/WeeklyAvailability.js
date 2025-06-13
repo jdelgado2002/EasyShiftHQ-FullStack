@@ -1,5 +1,5 @@
 $(function () {
-    var l = abp.localization.getResource('easyshifthq');
+    const l = abp.localization.getResource('easyshifthq');
     
     // Initialize interface
     initializeWeeklyAvailabilityInterface();
@@ -19,6 +19,11 @@ $(function () {
     });
 });
 
+// Define days array at the top level for both views to use
+const DAYS_OF_WEEK = [
+    'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'
+];
+
 function initializeWeeklyAvailabilityInterface() {
     // Could add more initialization here if needed
 }
@@ -28,11 +33,11 @@ function initializeTimeFields() {
     console.log('Initializing time fields...');
     
     // Use setTimeout to ensure DOM is fully ready
-    setTimeout(function() {
-        $('.time-picker').each(function(index, element) {
+    setTimeout(() => {
+        $('.time-picker').each((index, element) => {
             console.log('Processing time picker element:', index, element);
             
-            var $element = $(element);
+            const $element = $(element);
             
             // Check if timepicker is already initialized
             if (!$element.hasClass('hasTimepicker') && !$element.data('timepicker-obj')) {
@@ -41,7 +46,7 @@ function initializeTimeFields() {
                 // Destroy any existing timepicker first
                 try {
                     $element.timepicker('destroy');
-                } catch(e) {
+                } catch {
                     // Ignore if no timepicker exists
                 }
                 
@@ -62,7 +67,7 @@ function initializeTimeFields() {
                 console.log('Timepicker already initialized for element:', index);
             }
         });
-    }, 200); // Increased timeout
+    }, 200);
 }
 
 // Populate the days of the week rows
@@ -274,10 +279,24 @@ function loadSlots() {
     easyshifthq.availabilities.weeklyAvailabilities
         .getList()
         .then((result) => {
-            result.items.forEach((slot) => {
-                const day = days[slot.dayOfWeek].toLowerCase();
-                $(`#${day}Start`).val(formatTime(slot.startTime));
-                $(`#${day}End`).val(formatTime(slot.endTime));
+            // Clear existing values
+            DAYS_OF_WEEK.forEach(day => {
+                $(`#${day}Start`).val('');
+                $(`#${day}End`).val('');
+            });
+
+            // Set new values from API response
+            result?.items?.forEach(slot => {
+                if (slot.dayOfWeek >= 0 && slot.dayOfWeek < DAYS_OF_WEEK.length) {
+                    const day = DAYS_OF_WEEK[slot.dayOfWeek];
+                    console.log(`Setting time for ${day}:`, {
+                        startTime: slot.startTime,
+                        endTime: slot.endTime
+                    });
+                    
+                    $(`#${day}Start`).val(formatTime(slot.startTime));
+                    $(`#${day}End`).val(formatTime(slot.endTime));
+                }
             });
         })
         .catch((error) => {
@@ -288,10 +307,9 @@ function loadSlots() {
 
 function save() {
     const slots = [];
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     let hasValidationError = false;
 
-    for (const day of days) {
+    for (const day of DAYS_OF_WEEK) {
         const startTimeVal = $(`#${day}Start`).val();
         const endTimeVal = $(`#${day}End`).val();
         
@@ -318,7 +336,7 @@ function save() {
         }
 
         slots.push({
-            dayOfWeek: days.indexOf(day),
+            dayOfWeek: DAYS_OF_WEEK.indexOf(day),
             startTime: startTime,
             endTime: endTime
         });
