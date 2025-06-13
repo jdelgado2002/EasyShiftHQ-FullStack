@@ -1,6 +1,4 @@
 $(function () {
-    var l = abp.localization.getResource('easyshifthq');
-    
     // Initialize date picker fields
     initializeDateFields();
     
@@ -15,7 +13,7 @@ $(function () {
     
     // Delete time off request
     $(document).on('click', '.delete-time-off', function() {
-        var id = $(this).data('id');
+        const id = $(this).data('id');
         deleteTimeOffRequest(id);
     });
 });
@@ -31,11 +29,11 @@ function initializeDateFields() {
     
     // Set end date to be after start date
     $('#startDate').on('changeDate', function() {
-        var startDate = $(this).datepicker('getDate');
+        const startDate = $(this).datepicker('getDate');
         $('#endDate').datepicker('setStartDate', startDate);
         
         // If end date is before start date, update it
-        var endDate = $('#endDate').datepicker('getDate');
+        const endDate = $('#endDate').datepicker('getDate');
         if (endDate < startDate) {
             $('#endDate').datepicker('setDate', startDate);
         }
@@ -44,7 +42,7 @@ function initializeDateFields() {
 
 // Load existing time off requests
 function loadExistingTimeOffRequests() {
-    var employeeId = $('#employeeId').val();
+    const employeeId = $('#employeeId').val();
     if (!employeeId) {
         return;
     }
@@ -62,7 +60,7 @@ function loadExistingTimeOffRequests() {
 
 // Render time off requests in the table
 function renderTimeOffRequests(requests) {
-    var container = $('#timeOffRequestsContainer');
+    const container = $('#timeOffRequestsContainer');
     container.empty();
     
     if (!requests || requests.length === 0) {
@@ -70,7 +68,7 @@ function renderTimeOffRequests(requests) {
         return;
     }
     
-    var table = `
+    let table = `
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -91,12 +89,14 @@ function renderTimeOffRequests(requests) {
                 <td>${formatDate(request.timeOffEndDate)}</td>
                 <td>${request.reason || 'Not specified'}</td>
                 <td>
-                    <span class="badge bg-info">Pending</span>
+                    ${getStatusBadge(request.approvalStatus, request.denialReason)}
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-danger delete-time-off" data-id="${request.id}">
-                        <i class="fa fa-trash"></i> Cancel
-                    </button>
+                    ${request.approvalStatus === 0 ? // 0 is Pending
+                        `<button class="btn btn-sm btn-danger delete-time-off" data-id="${request.id}">
+                            <i class="fa fa-trash"></i> Cancel
+                        </button>` : 
+                        ''}
                 </td>
             </tr>
         `;
@@ -114,22 +114,22 @@ function renderTimeOffRequests(requests) {
 function formatDate(dateString) {
     if (!dateString) return '';
     
-    var date = new Date(dateString);
+    const date = new Date(dateString);
     return date.toLocaleDateString();
 }
 
 // Submit new time off request
 function submitTimeOffRequest() {
-    var startDate = $('#startDate').val();
-    var endDate = $('#endDate').val();
-    var reason = $('#reason').val();
+    const startDate = $('#startDate').val();
+    const endDate = $('#endDate').val();
+    const reason = $('#reason').val();
     
     if (!startDate || !endDate) {
         abp.notify.error('Please select start and end dates');
         return;
     }
     
-    var data = {
+    const data = {
         startDate: startDate,
         endDate: endDate,
         reason: reason
@@ -168,4 +168,23 @@ function deleteTimeOffRequest(id) {
             }
         }
     );
+}
+
+// Get status badge based on approval status
+function getStatusBadge(status, denialReason) {
+    switch(status) {
+        case 0: // Pending
+            return `<span class="badge bg-info">Pending</span>`;
+        case 1: // Approved
+            return `<span class="badge bg-success">Approved</span>`;
+        case 2: // Denied
+            return `<div>
+                <span class="badge bg-danger">Denied</span>
+                ${denialReason ? 
+                    `<div class="small text-muted mt-1">Reason: ${denialReason}</div>` : 
+                    ''}
+            </div>`;
+        default:
+            return `<span class="badge bg-secondary">Unknown</span>`;
+    }
 }

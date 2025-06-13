@@ -203,7 +203,7 @@ public class AvailabilityAppService : ApplicationService, IAvailabilityAppServic
         return ObjectMapper.Map<Availability, AvailabilityDto>(availability);
     }
 
-    [Authorize(AvailabilityPermissions.Availabilities.Edit)]
+    [Authorize(AvailabilityPermissions.Availabilities.Approve)]
     public async Task<AvailabilityDto> ApproveTimeOffRequestAsync(Guid id)
     {
         var availability = await _availabilityRepository.GetAsync(id);
@@ -235,7 +235,7 @@ public class AvailabilityAppService : ApplicationService, IAvailabilityAppServic
         return ObjectMapper.Map<Availability, AvailabilityDto>(availability);
     }
 
-    [Authorize(AvailabilityPermissions.Availabilities.Edit)]
+    [Authorize(AvailabilityPermissions.Availabilities.Approve)]
     public async Task<AvailabilityDto> DenyTimeOffRequestAsync(Guid id, string reason)
     {
         var availability = await _availabilityRepository.GetAsync(id);

@@ -5,7 +5,9 @@ const easyshifthq = window.easyshifthq || {};
 
     easyshifthq.availabilities.managerView = {
         init: function () {
+            console.log('Initializing manager view...');
             const $container = $('#AvailabilityManagerContainer');
+            console.log('Container found:', $container.length > 0);
             
             // Format time display
             this._formatTimeDisplays();
@@ -32,18 +34,23 @@ const easyshifthq = window.easyshifthq || {};
         },
 
         _initializeApproveButtons: function($container) {
+            console.log('Setting up approve button handlers');
             $container.on('click', '.btn-approve', (e) => {
                 e.preventDefault();
+                console.log('Approve button clicked');
                 
                 const $button = $(e.currentTarget);
                 const availabilityId = $button.data('id');
                 const startDate = $button.data('start-date');
                 const endDate = $button.data('end-date');
                 
+                console.log('Approve request data:', { availabilityId, startDate, endDate });
+                
                 abp.message.confirm(
                     l('TimeOffApprovalConfirmation', startDate, endDate),
                     (result) => {
                         if (result) {
+                            console.log('Approval confirmed, calling service...');
                             this._approveTimeOffRequest(availabilityId);
                         }
                     }
@@ -52,13 +59,17 @@ const easyshifthq = window.easyshifthq || {};
         },
 
         _initializeDenyButtons: function($container) {
+            console.log('Setting up deny button handlers');
             $container.on('click', '.btn-deny', (e) => {
                 e.preventDefault();
+                console.log('Deny button clicked');
                 
                 const $button = $(e.currentTarget);
                 const availabilityId = $button.data('id');
                 const startDate = $button.data('start-date');
                 const endDate = $button.data('end-date');
+                
+                console.log('Deny request data:', { availabilityId, startDate, endDate });
                 
                 $('#denyRequestModal').modal('show');
                 $('#denialForm').data('id', availabilityId);
@@ -70,35 +81,55 @@ const easyshifthq = window.easyshifthq || {};
             const self = this;
             $('#denialForm').on('submit', function(e) {
                 e.preventDefault();
+                console.log('Denial form submitted');
                 
                 const availabilityId = $(this).data('id');
                 const reason = $('#denialReason').val();
+                
+                console.log('Denial form data:', { availabilityId, reason });
                 
                 if (!reason) {
                     abp.message.error(l('PleaseProvideDenialReason'));
                     return;
                 }
                 
+                console.log('Sending denial request...');
                 self._denyTimeOffRequest(availabilityId, reason);
             });
         },
 
         _approveTimeOffRequest: function(availabilityId) {
+            console.log('Calling approveTimeOffRequest with ID:', availabilityId);
+            console.log('Availability service exists:', !!easyshifthq.availabilities.availability);
+            
             easyshifthq.availabilities.availability
                 .approveTimeOffRequest(availabilityId)
                 .then(() => {
+                    console.log('Approval successful');
                     abp.notify.success(l('TimeOffRequestApproved'));
                     location.reload();
+                })
+                .catch(error => {
+                    console.error('Approval failed:', error);
+                    abp.notify.error(l('ErrorOccurred'));
                 });
         },
 
         _denyTimeOffRequest: function(availabilityId, reason) {
+            console.log('Calling denyTimeOffRequest with:', { availabilityId, reason });
+            console.log('Availability service exists:', !!easyshifthq.availabilities.availability);
+            
             easyshifthq.availabilities.availability
                 .denyTimeOffRequest(availabilityId, reason)
                 .then(() => {
+                    console.log('Denial successful');
                     $('#denyRequestModal').modal('hide');
                     abp.notify.success(l('TimeOffRequestDenied'));
                     location.reload();
+                })
+                .catch(error => {
+                    console.error('Denial failed:', error);
+                    abp.notify.error(l('ErrorOccurred'));
                 });
         }
     };

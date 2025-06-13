@@ -1,7 +1,10 @@
 @page "{employeeId:guid}"
 @using easyshifthq.Web.Pages.Availabilities
 @using easyshifthq.Availabilities
+@using Microsoft.AspNetCore.Mvc.Localization
+@using easyshifthq.Localization
 @model easyshifthq.Web.Pages.Availabilities.ManagerViewModel
+@inject IHtmlLocalizer<easyshifthqResource> L
 @{
     ViewData["Title"] = "Employee Availability";
 }
@@ -18,7 +21,7 @@
     <abp-script src="/Pages/Availabilities/managerView.js" />
 }
 
-<div class="container">
+<div id="AvailabilityManagerContainer" class="container">
     <abp-card>
         <abp-card-header>
             <div class="row">
