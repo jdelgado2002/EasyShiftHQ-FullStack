@@ -63,7 +63,7 @@ public class easyshifthqWebTestModule : AbpModule
     {
         services.Configure<AbpNavigationOptions>(options =>
         {
-            options.MenuContributors.Add(new easyshifthqMenuContributor());
+            options.MenuContributors.Add(new EasyshifthqMenuContributor());
         });
     }
 }

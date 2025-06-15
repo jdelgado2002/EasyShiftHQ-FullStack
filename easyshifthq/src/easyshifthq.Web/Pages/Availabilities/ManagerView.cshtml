@@ -1,0 +1,196 @@
+@page "{employeeId:guid}"
+@using easyshifthq.Web.Pages.Availabilities
+@using easyshifthq.Availabilities
+@using Microsoft.AspNetCore.Mvc.Localization
+@using easyshifthq.Localization
+@model easyshifthq.Web.Pages.Availabilities.ManagerViewModel
+@inject IHtmlLocalizer<easyshifthqResource> L
+@{
+    ViewData["Title"] = "Employee Availability";
+}
+
+@section styles {
+    <style>
+        .time-off-card {
+            margin-bottom: 1rem;
+        }
+    </style>
+}
+
+@section scripts {
+    <abp-script src="/Pages/Availabilities/managerView.js" />
+}
+
+<div id="AvailabilityManagerContainer" class="container">
+    <abp-card>
+        <abp-card-header>
+            <div class="row">
+                <div class="col">
+                    <abp-card-title>Employee Availability</abp-card-title>
+                </div>
+                <div class="col text-end">
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                        <i class="fa fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+        </abp-card-header>
+        <abp-card-body>
+            <h3>Weekly Schedule</h3>
+            
+            @if (Model.EmployeeAvailability.WeeklySchedule.Count == 0)
+            {
+                <div class="alert alert-info">
+                    No weekly schedule has been set by this employee.
+                </div>
+            }
+            else
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Available</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var availability in Model.EmployeeAvailability.WeeklySchedule.OrderBy(a => a.DayOfWeek))
+                        {
+                            <tr>
+                                <td>@availability.DayOfWeek.ToString()</td>
+                                <td>
+                                    @if (availability.IsAvailable)
+                                    {
+                                        <span class="badge bg-success">Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">No</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="time-display" data-time="@availability.StartTime"></span>
+                                </td>
+                                <td>
+                                    <span class="time-display" data-time="@availability.EndTime"></span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            
+            <hr class="my-4" />
+            
+            <h3>Time Off Requests</h3>
+            
+            @if (Model.EmployeeAvailability.TimeOffRequests.Count == 0)
+            {
+                <div class="alert alert-info">
+                    No time off requests have been submitted by this employee.
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var request in Model.EmployeeAvailability.TimeOffRequests.OrderBy(r => r.TimeOffStartDate))
+                    {
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card time-off-card">
+                                <div class="card-header">
+                                    <h5 class="card-title">
+                                        @request.TimeOffStartDate?.ToString("MMM d, yyyy") - @request.TimeOffEndDate?.ToString("MMM d, yyyy")
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p><strong>Duration:</strong> @((request.TimeOffEndDate?.Date - request.TimeOffStartDate?.Date)?.Days + 1) day(s)</p>
+                                    <p>
+                                        <strong>Reason:</strong><br />
+                                        @(string.IsNullOrEmpty(request.Reason) ? "No reason provided" : request.Reason)
+                                    </p>
+                                    
+                                    @if (request.ApprovalStatus == TimeOffApprovalStatus.Approved)
+                                    {
+                                        <div class="alert alert-success mb-0">
+                                            <strong><i class="fa fa-check-circle"></i> Approved</strong>
+                                            @if (request.ApprovalDate != null)
+                                            {
+                                                <div>on @request.ApprovalDate?.ToString("MMM d, yyyy")</div>
+                                            }
+                                        </div>
+                                    }
+                                    else if (request.ApprovalStatus == TimeOffApprovalStatus.Denied)
+                                    {
+                                        <div class="alert alert-danger mb-0">
+                                            <strong><i class="fa fa-times-circle"></i> Denied</strong>
+                                            @if (request.ApprovalDate != null)
+                                            {
+                                                <div>on @request.ApprovalDate?.ToString("MMM d, yyyy")</div>
+                                            }
+                                            @if (!string.IsNullOrEmpty(request.DenialReason))
+                                            {
+                                                <div>Reason: @request.DenialReason</div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                <div class="card-footer d-flex justify-content-between">
+                                    @if (request.ApprovalStatus == TimeOffApprovalStatus.Pending)
+                                    {
+                                        <span class="badge bg-info me-2">Pending</span>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-success btn-approve mr-1" 
+                                                data-id="@request.Id"
+                                                data-start-date="@request.TimeOffStartDate?.ToString("MMM d, yyyy")"
+                                                data-end-date="@request.TimeOffEndDate?.ToString("MMM d, yyyy")">
+                                                <i class="fa fa-check"></i> Approve
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-danger btn-deny"
+                                                data-id="@request.Id"
+                                                data-start-date="@request.TimeOffStartDate?.ToString("MMM d, yyyy")"
+                                                data-end-date="@request.TimeOffEndDate?.ToString("MMM d, yyyy")">
+                                                <i class="fa fa-times"></i> Deny
+                                            </button>
+                                        </div>
+                                    }
+                                    else if (request.ApprovalStatus == TimeOffApprovalStatus.Approved)
+                                    {
+                                        <span class="badge bg-success">Approved</span>
+                                    }
+                                    else if (request.ApprovalStatus == TimeOffApprovalStatus.Denied)
+                                    {
+                                        <span class="badge bg-danger">Denied</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </abp-card-body>
+    </abp-card>
+</div>
+
+<!-- Denial Modal -->
+<form id="denialForm">
+    <abp-modal id="denyRequestModal">
+        <abp-modal-header title="@L["DenyTimeOffRequest"].Value"></abp-modal-header>
+        <abp-modal-body>
+            <div class="mb-3">
+                <label for="DenialReason">@L["TimeOffDenialPeriodMessage"].Value: <span id="denialFormTimeSpan" class="fw-bold"></span></label>
+            </div>
+            <abp-input asp-for="DenialReason" 
+                      type="textarea" 
+                      rows="3" 
+                      required="true" 
+                      label="@L["DenialReason"].Value" 
+                      info="@L["DenialReasonInfo"].Value" />
+        </abp-modal-body>
+        <abp-modal-footer>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Cancel"].Value</button>
+            <button type="submit" class="btn btn-danger">@L["ConfirmDenial"].Value</button>
+        </abp-modal-footer>
+    </abp-modal>
+</form>

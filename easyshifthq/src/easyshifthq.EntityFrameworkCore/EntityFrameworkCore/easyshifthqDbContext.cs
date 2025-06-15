@@ -16,6 +16,7 @@ using Volo.Abp.TenantManagement;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using easyshifthq.Invitations;
 using easyshifthq.Locations;
+using easyshifthq.Availabilities;
 
 namespace easyshifthq.EntityFrameworkCore;
 
@@ -26,11 +27,11 @@ public class EasyshifthqDbContext :
     AbpDbContext<EasyshifthqDbContext>,
     ITenantManagementDbContext,
     IIdentityDbContext
-{
-    /* Add DbSet properties for your Aggregate Roots / Entities here. */
+{    /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
     public DbSet<Invitation> Invitations { get; set; }
     public DbSet<Location> Locations { get; set; }
+    public DbSet<Availability> Availabilities { get; set; }
 
     #region Entities from the modules
 
@@ -97,9 +98,7 @@ public class EasyshifthqDbContext :
             b.Property(x => x.TokenHash).IsRequired();
             
             b.HasIndex(x => x.Email);
-        });
-
-        modelBuilder.Entity<Location>(b =>
+        });        modelBuilder.Entity<Location>(b =>
         {
             b.ToTable(easyshifthqConsts.DbTablePrefix + "Locations", easyshifthqConsts.DbSchema);
             b.ConfigureByConvention();
@@ -113,6 +112,20 @@ public class EasyshifthqDbContext :
             b.HasIndex(x => x.Name);
             b.HasIndex(x => x.TimeZone);
             b.HasIndex(x => x.JurisdictionCode);
+        });
+
+        modelBuilder.Entity<Availability>(b =>
+        {
+            b.ToTable(easyshifthqConsts.DbTablePrefix + "Availabilities", easyshifthqConsts.DbSchema);
+            b.ConfigureByConvention();
+            
+            b.Property(x => x.EmployeeId).IsRequired();
+            b.Property(x => x.Reason).HasMaxLength(AvailabilityConsts.MaxReasonLength);
+            
+            b.HasIndex(x => x.EmployeeId);
+            b.HasIndex(x => x.DayOfWeek);
+            b.HasIndex(x => x.TimeOffStartDate);
+            b.HasIndex(x => x.TimeOffEndDate);
         });
     }
 }

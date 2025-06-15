@@ -10,7 +10,7 @@ using Volo.Abp.TenantManagement.Web.Navigation;
 
 namespace easyshifthq.Web.Menus;
 
-public class easyshifthqMenuContributor : IMenuContributor
+public class EasyshifthqMenuContributor : IMenuContributor
 {
     public async Task ConfigureMenuAsync(MenuConfigurationContext context)
     {
@@ -44,9 +44,7 @@ public class easyshifthqMenuContributor : IMenuContributor
                 icon: "fas fa-envelope",
                 order: 3
             )
-        );
-
-        // Add Location menu item
+        );        // Add Location menu item
         if (await context.IsGrantedAsync(LocationPermissions.Locations.Default))
         {
             context.Menu.AddItem(
@@ -58,22 +56,53 @@ public class easyshifthqMenuContributor : IMenuContributor
                     order: 4
                 )
             );
+        }        // Add Availability menu items
+        var availabilityMenuItem = new ApplicationMenuItem(
+            "Availability",
+            l["Availability"],
+            icon: "fas fa-calendar-alt",
+            order: 5
+        )
+        .AddItem(
+            new ApplicationMenuItem(
+                "Availability.Weekly",
+                l["WeeklyAvailability"],
+                url: "/Availabilities/WeeklyAvailability",
+                icon: "fas fa-calendar-week"
+            )
+        )
+        .AddItem(
+            new ApplicationMenuItem(
+                "Availability.TimeOff",
+                l["TimeOffRequests"],
+                url: "/Availabilities/TimeOffRequests",
+                icon: "fas fa-calendar-times"
+            )
+        );
+
+        // Add Manager View menu item for users with Approve permission
+        if (await context.IsGrantedAsync(AvailabilityPermissions.Availabilities.Approve))
+        {
+            availabilityMenuItem.AddItem(
+                new ApplicationMenuItem(
+                    "Availability.ManagerView",
+                    l["ManagerView"],
+                    url: "/Availabilities/EmployeeList",
+                    icon: "fas fa-users-cog"
+                )
+            );
         }
+
+        context.Menu.AddItem(availabilityMenuItem);
 
         //Administration
         var administration = context.Menu.GetAdministration();
         administration.Order = 6;
 
         //Administration->Identity
-        administration.SetSubItemOrder(IdentityMenuNames.GroupName, 2);
-    
-        if (MultiTenancyConsts.IsEnabled)
+        administration.SetSubItemOrder(IdentityMenuNames.GroupName, 2);        if (MultiTenancyConsts.IsEnabled)
         {
             administration.SetSubItemOrder(TenantManagementMenuNames.GroupName, 1);
-        }
-        else
-        {
-            administration.TryRemoveMenuItem(TenantManagementMenuNames.GroupName);
         }
         
         administration.SetSubItemOrder(SettingManagementMenuNames.GroupName, 3);

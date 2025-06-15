@@ -227,7 +227,7 @@ public class easyshifthqWebModule : AbpModule
     {
         Configure<AbpNavigationOptions>(options =>
         {
-            options.MenuContributors.Add(new easyshifthqMenuContributor());
+            options.MenuContributors.Add(new EasyshifthqMenuContributor());
         });
 
         Configure<AbpToolbarOptions>(options =>
