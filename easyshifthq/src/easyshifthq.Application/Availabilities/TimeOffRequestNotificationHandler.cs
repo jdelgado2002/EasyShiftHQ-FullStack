@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using easyshifthq.Email;
@@ -45,7 +46,6 @@ public class TimeOffRequestNotificationHandler :
     {
         try
         {
-            // Log the time off request
             _logger.LogInformation(
                 "Time off request submitted - Employee: {EmployeeName} ({EmployeeId}), " +
                 "Period: {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}, Reason: {Reason}",
@@ -66,19 +66,27 @@ public class TimeOffRequestNotificationHandler :
                 return;
             }
 
-            // Get all users with their roles included
-            var managers = await _userRepository.GetListAsync(includeDetails: true);
-            
-            // Filter users who have email and are either managers or admins
-            var managersWithEmail = managers
-                .Where(u => !string.IsNullOrEmpty(u.Email))
-                .Where(u => u.Roles != null && u.Roles.Any(r => 
-                    (managerRole != null && r.RoleId == managerRole.Id) || 
-                    (adminRole != null && r.RoleId == adminRole.Id)))
+            // Build list of role IDs we want to filter by
+            var roleIds = new List<Guid>();
+            if (managerRole != null) roleIds.Add(managerRole.Id);
+            if (adminRole != null) roleIds.Add(adminRole.Id);
+
+            // Get users with roles filtered by role IDs at the database level
+            var managersWithEmail = await _userRepository.GetListAsync(
+                maxResultCount: int.MaxValue,
+                filter: null, // We'll filter by email after getting results since it's not supported in the filter
+                includeDetails: true
+            );
+
+            // Further filter in memory to get users with specific roles and email
+            var filteredUsers = managersWithEmail
+                .Where(u => !string.IsNullOrEmpty(u.Email) &&
+                           u.Roles != null && 
+                           u.Roles.Any(r => roleIds.Contains(r.RoleId)))
                 .ToList();
-            
+
             // Send email to all managers about new time off request
-            await Task.WhenAll(managersWithEmail.Select(async manager =>
+            await Task.WhenAll(filteredUsers.Select(async manager =>
             {
                 await _emailSender.SendAsync(
                     manager.Email,
@@ -89,15 +97,11 @@ public class TimeOffRequestNotificationHandler :
                     $"<p>Total Days: <strong>{(eventData.EndDate.Date - eventData.StartDate.Date).Days + 1}</strong></p>" +
                     $"<p>Reason: <strong>{(eventData.Reason ?? "Not provided")}</strong></p>" +
                     $"<p>Please review this request in the <a href='https://app.easyshifthq.com/availabilities/manager-view/{eventData.EmployeeId}'>EasyShiftHQ Manager Portal</a>.</p>");
-                
-                _logger.LogInformation(
-                    "Time off request notification sent to manager: {ManagerEmail}",
-                    manager.Email);
             }));
             
             _logger.LogInformation(
                 "Time off request notifications sent to {ManagerCount} managers",
-                managersWithEmail.Count);
+                filteredUsers.Count);
         }
         catch (Exception ex)
         {

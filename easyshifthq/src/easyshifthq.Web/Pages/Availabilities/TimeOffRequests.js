@@ -92,7 +92,7 @@ function renderTimeOffRequests(requests) {
                     ${getStatusBadge(request.approvalStatus, request.denialReason)}
                 </td>
                 <td>
-                    ${request.approvalStatus === 0 ? // 0 is Pending
+                    ${request.approvalStatus === 'Pending' ?
                         `<button class="btn btn-sm btn-danger delete-time-off" data-id="${request.id}">
                             <i class="fa fa-trash"></i> Cancel
                         </button>` : 
@@ -173,11 +173,11 @@ function deleteTimeOffRequest(id) {
 // Get status badge based on approval status
 function getStatusBadge(status, denialReason) {
     switch(status) {
-        case 0: // Pending
+        case 'Pending':
             return `<span class="badge bg-info">Pending</span>`;
-        case 1: // Approved
+        case 'Approved':
             return `<span class="badge bg-success">Approved</span>`;
-        case 2: // Denied
+        case 'Denied':
             return `<div>
                 <span class="badge bg-danger">Denied</span>
                 ${denialReason ? 
