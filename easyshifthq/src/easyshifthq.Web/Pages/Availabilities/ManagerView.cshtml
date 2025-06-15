@@ -176,21 +176,21 @@
 <!-- Denial Modal -->
 <form id="denialForm">
     <abp-modal id="denyRequestModal">
-        <abp-modal-header title="@L["DenyTimeOffRequest"]"></abp-modal-header>
+        <abp-modal-header title="@L["DenyTimeOffRequest"].Value"></abp-modal-header>
         <abp-modal-body>
             <div class="mb-3">
-                <label>@L["TimeOffDenialPeriodMessage"]: <span id="denialFormTimeSpan" class="fw-bold"></span></label>
+                <label>@L["TimeOffDenialPeriodMessage"].Value: <span id="denialFormTimeSpan" class="fw-bold"></span></label>
             </div>
             <abp-input asp-for="DenialReason" 
                       type="textarea" 
                       rows="3" 
                       required="true" 
-                      label="@L["DenialReason"]" 
-                      info="@L["DenialReasonInfo"]" />
+                      label="@L["DenialReason"].Value" 
+                      info="@L["DenialReasonInfo"].Value" />
         </abp-modal-body>
         <abp-modal-footer>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Cancel"]</button>
-            <button type="submit" class="btn btn-danger">@L["ConfirmDenial"]</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@L["Cancel"].Value</button>
+            <button type="submit" class="btn btn-danger">@L["ConfirmDenial"].Value</button>
         </abp-modal-footer>
     </abp-modal>
 </form>

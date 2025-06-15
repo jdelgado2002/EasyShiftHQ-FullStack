@@ -87,7 +87,7 @@ const easyshifthq = window.easyshifthq || {};
                 console.log('Denial form submitted');
                 
                 const availabilityId = $(this).data('id');
-                const reason = $('#denialReason').val();
+                const reason = $('#DenialReason').val();
                 
                 console.log('Denial form data:', { availabilityId, reason });
                 

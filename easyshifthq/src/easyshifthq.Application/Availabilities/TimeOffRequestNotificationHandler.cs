@@ -58,14 +58,24 @@ public class TimeOffRequestNotificationHandler :
                 eventData.EndDate,
                 eventData.Reason ?? "Not provided");
 
-            // Get all users in the manager role
+            // Get manager and admin roles
             var roleids = await _roleRepository.GetListAsync();
             var managerRole = roleids.FirstOrDefault(r => r.NormalizedName == MANAGER);
             var adminRole = roleids.FirstOrDefault(r => r.NormalizedName == ADMIN);
 
-            var managers = await _userRepository.GetListAsync();
+            if (managerRole == null && adminRole == null)
+            {
+                _logger.LogWarning("Neither MANAGER nor ADMIN roles were found in the system");
+                return;
+            }
+
+            // Get all users with their roles included
+            var managers = await _userRepository.GetListAsync(includeDetails: true);
+            
+            // Filter users who have email and are either managers or admins
             var managersWithEmail = managers
-                .Where(u => !string.IsNullOrEmpty(u.Email) && u.Roles.Any(r => 
+                .Where(u => !string.IsNullOrEmpty(u.Email))
+                .Where(u => u.Roles != null && u.Roles.Any(r => 
                     (managerRole != null && r.RoleId == managerRole.Id) || 
                     (adminRole != null && r.RoleId == adminRole.Id)))
                 .ToList();
