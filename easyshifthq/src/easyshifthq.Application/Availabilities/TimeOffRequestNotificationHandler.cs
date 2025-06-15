@@ -27,20 +27,17 @@ public class TimeOffRequestNotificationHandler :
     private readonly IIdentityUserRepository _userRepository;
     private readonly IEmailSender _emailSender;
     private readonly ILogger<TimeOffRequestNotificationHandler> _logger;
-    private readonly ISettingProvider _settingProvider;
     private readonly IIdentityRoleRepository _roleRepository;
 
     public TimeOffRequestNotificationHandler(
         IIdentityUserRepository userRepository,
         IEmailSender emailSender,
         ILogger<TimeOffRequestNotificationHandler> logger,
-        ISettingProvider settingProvider,
         IIdentityRoleRepository roleRepository)
     {
         _userRepository = userRepository;
         _emailSender = emailSender;
         _logger = logger;
-        _settingProvider = settingProvider;
         _roleRepository = roleRepository;
     }
 

@@ -179,7 +179,7 @@
         <abp-modal-header title="@L["DenyTimeOffRequest"].Value"></abp-modal-header>
         <abp-modal-body>
             <div class="mb-3">
-                <label>@L["TimeOffDenialPeriodMessage"].Value: <span id="denialFormTimeSpan" class="fw-bold"></span></label>
+                <label for="DenialReason">@L["TimeOffDenialPeriodMessage"].Value: <span id="denialFormTimeSpan" class="fw-bold"></span></label>
             </div>
             <abp-input asp-for="DenialReason" 
                       type="textarea" 
