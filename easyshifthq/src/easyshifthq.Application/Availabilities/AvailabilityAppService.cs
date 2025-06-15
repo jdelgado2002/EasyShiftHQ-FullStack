@@ -282,4 +282,15 @@ public class AvailabilityAppService : ApplicationService, IAvailabilityAppServic
 
         await _availabilityRepository.DeleteAsync(id);
     }
+
+    [Authorize]
+    public async Task<List<AvailabilityDto>> GetCurrentUserWeeklyAvailabilityAsync()
+    {
+        if (!CurrentUser.Id.HasValue)
+        {
+            throw new UnauthorizedAccessException("User must be authenticated.");
+        }
+
+        return await GetEmployeeWeeklyAvailabilityAsync(CurrentUser.Id.Value);
+    }
 }

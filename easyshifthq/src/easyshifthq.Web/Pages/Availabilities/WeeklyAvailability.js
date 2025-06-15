@@ -56,15 +56,12 @@ function initializeTimeFields() {
                     minTime: '00:00',
                     maxTime: '23:30',
                     defaultTime: '09:00',
-                    startTime: '00:00',
                     dynamic: false,
                     dropdown: true,
                     scrollbar: true,
                     show2400: false,
                     step: 30
                 });
-            } else {
-                console.log('Timepicker already initialized for element:', index);
             }
         });
     }, 200);
@@ -72,40 +69,31 @@ function initializeTimeFields() {
 
 // Populate the days of the week rows
 function populateDaysOfWeek() {
-    var daysOfWeek = [
-        { id: 0, name: 'Sunday' },
-        { id: 1, name: 'Monday' },
-        { id: 2, name: 'Tuesday' },
-        { id: 3, name: 'Wednesday' },
-        { id: 4, name: 'Thursday' },
-        { id: 5, name: 'Friday' },
-        { id: 6, name: 'Saturday' }
-    ];
-    
-    var container = $('#weeklyAvailabilityContainer');
+    const container = $('#weeklyAvailabilityContainer');
     container.empty();
     
-    daysOfWeek.forEach(function(day) {
-        var rowTemplate = `
-            <div class="weekly-availability-row card mb-3" data-day="${day.id}">
+    DAYS_OF_WEEK.forEach((day, index) => {
+        const dayName = day.charAt(0).toUpperCase() + day.slice(1);
+        const rowTemplate = `
+            <div class="weekly-availability-row card mb-3" data-day="${index}">
                 <div class="card-body">
-                    <div class="row">
+                    <div class="row align-items-center">
                         <div class="col-md-2">
                             <div class="form-check form-switch">
-                                <input class="form-check-input availability-toggle" type="checkbox" id="isAvailable-${day.id}" value="true">
-                                <label class="form-check-label" for="isAvailable-${day.id}">${day.name}</label>
+                                <input class="form-check-input availability-toggle" type="checkbox" id="${day}Toggle">
+                                <label class="form-check-label" for="${day}Toggle">${dayName}</label>
                             </div>
                         </div>
                         <div class="col-md-5">
                             <div class="input-group">
                                 <span class="input-group-text">Start</span>
-                                <input type="text" class="form-control time-picker start-time" id="startTime-${day.id}" disabled>
+                                <input type="text" class="form-control time-picker start-time" id="${day}Start" disabled>
                             </div>
                         </div>
                         <div class="col-md-5">
                             <div class="input-group">
                                 <span class="input-group-text">End</span>
-                                <input type="text" class="form-control time-picker end-time" id="endTime-${day.id}" disabled>
+                                <input type="text" class="form-control time-picker end-time" id="${day}End" disabled>
                             </div>
                         </div>
                     </div>
@@ -117,58 +105,75 @@ function populateDaysOfWeek() {
     
     // Add event handlers to availability toggles
     $('.availability-toggle').on('change', function() {
-        var dayElement = $(this).closest('.weekly-availability-row');
-        var startTimeField = dayElement.find('.start-time');
-        var endTimeField = dayElement.find('.end-time');
+        const dayElement = $(this).closest('.weekly-availability-row');
+        const startTimeField = dayElement.find('.start-time');
+        const endTimeField = dayElement.find('.end-time');
         
-        if ($(this).is(':checked')) {
-            startTimeField.prop('disabled', false);
-            endTimeField.prop('disabled', false);
-        } else {
-            startTimeField.prop('disabled', true);
-            endTimeField.prop('disabled', true);
-        }
+        startTimeField.prop('disabled', !$(this).is(':checked'));
+        endTimeField.prop('disabled', !$(this).is(':checked'));
     });
 }
 
 // Load employee's existing weekly availability
-function loadEmployeeWeeklyAvailability() {
-    var employeeId = $('#employeeId').val();
-    if (!employeeId) {
-        return;
-    }
+async function loadEmployeeWeeklyAvailability() {    
+    const l = abp.localization.getResource('easyshifthq');
     
-    easyshifthq.availabilities.availability
-        .getEmployeeWeeklyAvailability(employeeId)
-        .then(function(result) {
-            if (result && result.length > 0) {
-                result.forEach(function(availability) {
-                    var dayId = availability.dayOfWeek;
-                    var rowElement = $(`.weekly-availability-row[data-day="${dayId}"]`);
-                    
+    try {
+        // Clear existing state before loading
+        $('.weekly-availability-row').removeAttr('data-id');
+        $('.availability-toggle').prop('checked', false);
+        $('.time-picker').val('').prop('disabled', true);
+        
+        // Get current user's availability through the secure service endpoint
+        const result = await easyshifthq.availabilities.availability
+            .getCurrentUserWeeklyAvailability();
+
+        if (result && result.length > 0) {
+            result.forEach(function(availability) {
+                const dayId = availability.dayOfWeek;
+                const rowElement = $(`.weekly-availability-row[data-day="${dayId}"]`);
+                
+                if (!rowElement.length) {
+                    console.warn(`No row element found for day ${dayId}`);
+                    return;
+                }
+                
+                try {
+                    // Set the ID on the row element
                     rowElement.attr('data-id', availability.id);
                     
                     // Check the availability toggle
-                    var toggle = rowElement.find('.availability-toggle');
+                    const toggle = rowElement.find('.availability-toggle');
                     toggle.prop('checked', availability.isAvailable);
                     
                     // Set start and end times
-                    var startTime = rowElement.find('.start-time');
-                    var endTime = rowElement.find('.end-time');
+                    const day = DAYS_OF_WEEK[dayId];
+                    const startTime = $(`#${day}Start`);
+                    const endTime = $(`#${day}End`);
                     
-                    startTime.val(formatTime(availability.startTime));
-                    endTime.val(formatTime(availability.endTime));
-                    
-                    // Enable/disable time fields based on availability
-                    startTime.prop('disabled', !availability.isAvailable);
-                    endTime.prop('disabled', !availability.isAvailable);
-                });
-            }
-        })
-        .catch(function(error) {
-            abp.notify.error('Failed to load availability data');
-            console.error(error);
-        });
+                    if (availability.isAvailable) {
+                        startTime.val(formatTime(availability.startTime));
+                        endTime.val(formatTime(availability.endTime));
+                        startTime.prop('disabled', false);
+                        endTime.prop('disabled', false);
+                    } else {
+                        startTime.val('').prop('disabled', true);
+                        endTime.val('').prop('disabled', true);
+                    }
+                } catch (err) {
+                    console.error(`Error updating UI for day ${dayId}:`, err);
+                }
+            });
+
+            console.log('Availability data loaded and UI updated');
+        } else {
+            console.log('No availability data found');
+        }
+    } catch (error) {
+        console.error('Error loading availability:', error);
+        abp.notify.error(l('ErrorLoadingAvailability'));
+        throw error; // Re-throw to handle in calling code if needed
+    }
 }
 
 // Format time string from backend (HH:mm:ss) to HH:mm
@@ -206,155 +211,87 @@ function parseTime(timeString) {
 }
 
 // Save all weekly availability entries
-function saveAllWeeklyAvailability() {
-    var rows = $('.weekly-availability-row');
-    var promises = [];
-    
-    rows.each(function() {
-        var row = $(this);
-        var isChecked = row.find('.availability-toggle').is(':checked');
-        var dayOfWeek = parseInt(row.data('day'));
-        var existingId = row.data('id');
-        
-        // Skip if not available and no existing record
-        if (!isChecked && !existingId) {
-            return;
-        }
-        
-        var startTimeVal = row.find('.start-time').val();
-        var endTimeVal = row.find('.end-time').val();
-        
-        console.log('Raw time values:', { startTimeVal, endTimeVal });
-        
-        var data = {
-            dayOfWeek: dayOfWeek,
-            isAvailable: isChecked,
-            startTime: isChecked ? parseTime(startTimeVal) : null,
-            endTime: isChecked ? parseTime(endTimeVal) : null
-        };
-        
-        console.log('Sending data:', data);
-        
-        // If we have an existing record, update it
-        if (existingId) {
-            promises.push(
-                easyshifthq.availabilities.availability
-                    .updateWeeklyAvailability(existingId, data)
-                    .catch(function(error) {
-                        console.error('Failed to update availability:', error);
-                        throw error;
-                    })
-            );
-        }
-        // Otherwise create a new record if available
-        else if (isChecked) {
-            promises.push(
-                easyshifthq.availabilities.availability
-                    .submitWeeklyAvailability(data)
-                    .catch(function(error) {
-                        console.error('Failed to submit availability:', error);
-                        throw error;
-                    })
-            );
-        }
-    });
-    
-    if (promises.length === 0) {
-        abp.notify.info('No changes to save');
-        return;
-    }
-    
-    Promise.all(promises)
-        .then(function() {
-            abp.notify.success('Weekly availability saved successfully');
-            loadEmployeeWeeklyAvailability(); // Reload to get IDs for new entries
-        })
-        .catch(function(error) {
-            abp.notify.error('Failed to save availability data');
-            console.error('Save error:', error);
-        });
-}
-
-function loadSlots() {
-    easyshifthq.availabilities.weeklyAvailabilities
-        .getList()
-        .then((result) => {
-            // Clear existing values
-            DAYS_OF_WEEK.forEach(day => {
-                $(`#${day}Start`).val('');
-                $(`#${day}End`).val('');
-            });
-
-            // Set new values from API response
-            result?.items?.forEach(slot => {
-                if (slot.dayOfWeek >= 0 && slot.dayOfWeek < DAYS_OF_WEEK.length) {
-                    const day = DAYS_OF_WEEK[slot.dayOfWeek];
-                    console.log(`Setting time for ${day}:`, {
-                        startTime: slot.startTime,
-                        endTime: slot.endTime
-                    });
-                    
-                    $(`#${day}Start`).val(formatTime(slot.startTime));
-                    $(`#${day}End`).val(formatTime(slot.endTime));
-                }
-            });
-        })
-        .catch((error) => {
-            console.error('Error loading slots:', error);
-            abp.notify.error(l('ErrorLoadingSlots'));
-        });
-}
-
-function save() {
-    const slots = [];
+async function saveAllWeeklyAvailability() {
+    const l = abp.localization.getResource('easyshifthq');
     let hasValidationError = false;
-
-    for (const day of DAYS_OF_WEEK) {
+    const savePromises = [];
+    
+    // First do validation pass
+    DAYS_OF_WEEK.forEach((day, index) => {
+        const isChecked = $(`#${day}Toggle`).is(':checked');
         const startTimeVal = $(`#${day}Start`).val();
         const endTimeVal = $(`#${day}End`).val();
         
-        // Skip if both fields are empty (no availability set)
-        if (!startTimeVal && !endTimeVal) {
-            continue;
-        }
-        
-        // Validate that both times are present if one is filled
-        if (!startTimeVal || !endTimeVal) {
+        if (isChecked && (!startTimeVal || !endTimeVal)) {
             abp.notify.warn(l('PleaseEnterBothStartAndEndTimes'));
             hasValidationError = true;
-            break;
+            return false;
         }
         
-        const startTime = parseTime(startTimeVal);
-        const endTime = parseTime(endTimeVal);
-        
-        // Validate time format
-        if (!startTime || !endTime) {
-            abp.notify.warn(l('InvalidTimeFormat'));
-            hasValidationError = true;
-            break;
+        if (isChecked) {
+            const startTime = parseTime(startTimeVal);
+            const endTime = parseTime(endTimeVal);
+            if (!startTime || !endTime) {
+                abp.notify.warn(l('InvalidTimeFormat'));
+                hasValidationError = true;
+                return false;
+            }
         }
-
-        slots.push({
-            dayOfWeek: DAYS_OF_WEEK.indexOf(day),
-            startTime: startTime,
-            endTime: endTime
-        });
-    }
-
+    });
+    
     if (hasValidationError) {
         return;
     }
 
-    // Save the slots
-    easyshifthq.availabilities.weeklyAvailabilities
-        .save(slots)
-        .then(() => {
-            abp.notify.success(l('SavedSuccessfully'));
-            loadSlots(); // Refresh the data
-        })
-        .catch(error => {
-            console.error('Error saving slots:', error);
-            abp.notify.error(l('ErrorSavingSlots'));
+    try {
+        // Disable save button to prevent double submission
+        const saveButton = $('#SaveAllWeeklyAvailability');
+        saveButton.prop('disabled', true);
+        
+        // Process each day
+        DAYS_OF_WEEK.forEach((day, index) => {
+            const isChecked = $(`#${day}Toggle`).is(':checked');
+            const rowElement = $(`.weekly-availability-row[data-day="${index}"]`);
+            const existingId = rowElement.attr('data-id');
+            
+            // Skip if not available and no existing record
+            if (!isChecked && !existingId) {
+                return;
+            }
+            
+            const startTimeVal = $(`#${day}Start`).val();
+            const endTimeVal = $(`#${day}End`).val();
+            
+            const data = {
+                dayOfWeek: index,
+                startTime: isChecked ? parseTime(startTimeVal) : null,
+                endTime: isChecked ? parseTime(endTimeVal) : null,
+                isAvailable: isChecked
+            };
+
+            let savePromise;
+            if (existingId) {
+                savePromise = easyshifthq.availabilities.availability.updateWeeklyAvailability(existingId, data);
+            } else if (isChecked) {
+                savePromise = easyshifthq.availabilities.availability.submitWeeklyAvailability(data);
+            }
+            
+            if (savePromise) {
+                savePromises.push(savePromise);
+            }
         });
+
+        // Wait for all saves to complete
+        await Promise.all(savePromises);
+        
+        // Success! Reload the data to get new IDs
+        abp.notify.success(l('AvailabilitySavedSuccessfully'));
+        await loadEmployeeWeeklyAvailability();
+    } catch (error) {
+        console.error('Failed to save availability:', error);
+        abp.notify.error(l('ErrorSavingAvailability'));
+    } finally {
+        // Re-enable save button
+        $('#SaveAllWeeklyAvailability').prop('disabled', false);
+    }
 }

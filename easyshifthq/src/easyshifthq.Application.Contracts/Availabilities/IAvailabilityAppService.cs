@@ -43,4 +43,7 @@ public interface IAvailabilityAppService : IApplicationService
     
     [HttpDelete]
     Task DeleteAsync(Guid id);
+
+    [HttpGet]
+    Task<List<AvailabilityDto>> GetCurrentUserWeeklyAvailabilityAsync();
 }
