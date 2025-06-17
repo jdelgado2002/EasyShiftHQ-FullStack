@@ -200,10 +200,171 @@ sequenceDiagram
 **Stories:**
 
 * `Story 2.1`: Add `Shift` entity with Role, StartTime, EndTime, LocationId. Add EF Core migration.
+  * Create `Shift` entity in `easyshifthq.Domain/Shifts` with the following properties:
+    * Basic properties: Id (Guid), TenantId (Guid?), LocationId (Guid), EmployeeId (Guid?), Title (string), Role (string), StartTime (DateTime), EndTime (DateTime), Status (ShiftStatus enum)
+    * Additional properties: Notes (string?), Color (string?), IsPublished (bool)
+    * Role properties: RoleId (Guid?), RoleName (string) - Store both ID and name for efficient querying
+    * Date information: ShiftDate (DateTime) to easily filter by specific date without time component
+    * Employee tracking: Add navigation property to Employee entity, include WeeklyHours tracking property to track current scheduled hours for validation
+    * Availability tracking: Add reference to employee availability records to enable validation against both regular availability and time-off requests
+  * Create `ShiftStatus` enum in `easyshifthq.Domain.Shared/Shifts` with values: `Draft`, `Published`, `Cancelled`
+  * Create `ShiftConsts` in `easyshifthq.Domain.Shared/Shifts` with maximum length constants:
+    * MaxTitleLength = 128
+    * MaxRoleLength = 128
+    * MaxNotesLength = 1000
+    * MaxColorLength = 10
+  * Create `Role` entity in `easyshifthq.Domain/Roles` with properties:
+    * Basic properties: Id (Guid), TenantId (Guid?), Name (string), Description (string?)
+    * Additional properties: IsActive (bool), Color (string?)
+  * Add `IShiftRepository` interface in `easyshifthq.Domain/Shifts` with specialized methods:
+    * `GetShiftsByDateRangeAsync(DateTime startDate, DateTime endDate, Guid? locationId = null)`
+    * `GetShiftsByEmployeeAsync(Guid employeeId, DateTime? startDate = null, DateTime? endDate = null)`
+    * `GetShiftsByLocationAsync(Guid locationId, DateTime? startDate = null, DateTime? endDate = null)`
+    * `GetEmployeeWeeklyHoursAsync(Guid employeeId, DateTime weekStartDate)` - Calculate total hours scheduled for an employee in a week
+    * `GetUnavailableDateRangesAsync(Guid employeeId, DateTime startDate, DateTime endDate)` - Retrieve all time-off periods for an employee within a date range
+  * Implement `EfCoreShiftRepository` in `easyshifthq.EntityFrameworkCore/Shifts`
+  * Update `EasyShiftHQDbContext` to include `DbSet<Shift>` and `DbSet<Role>` properties
+  * Add EF Core migration using `dotnet ef migrations add Added_Shift_And_Role_Entities -p ../easyshifthq.EntityFrameworkCore -s ../easyshifthq.DbMigrator`
+  * Update database using DbMigrator project
+
 * `Story 2.2`: Implement domain logic for conflict checking and validation.
-* `Story 2.3`: Create drag-and-drop React calendar editor.
-* `Story 2.4`: Enable shift duplication, shift pool.
-* `Story 2.5`: Write integration tests and Playwright UI tests.
+  * Create `ShiftManager` domain service in `easyshifthq.Domain/Shifts` with methods:
+    * `ValidateShift()` - Checks if shift times are valid (end > start)
+    * `CheckForConflicts()` - Detects overlapping shifts for the same employee
+    * `CheckEmployeeAvailability()` - Verifies employee is available for shift
+    * `CheckTimeOffRequests()` - Verifies shift does not overlap with approved time-off
+    * `CalculateHoursInPeriod()` - Computes total employee hours in a week
+    * `AssignEmployeeToShift()` - Handles employee assignment with all validations
+    * `GetEmployeeWeeklySchedule()` - Retrieves all shifts for an employee in a week
+  * Add business rules for validations:
+    * Prevent scheduling outside of availability
+    * Block scheduling during approved time-off/vacation periods
+    * Check for double-booking employees
+    * Validate minimum rest periods between shifts
+    * Verify location operating hours
+    * Ensure all required fields are provided (Role, Start Time, End Time, Date, Location)
+    * Validate time format (12-hour format with AM/PM)
+    * Ensure shifts don't span multiple days (if business rule requires)
+    * Track employee weekly hours when assigning shifts
+    * Validate against overtime rules based on employee type (full-time/part-time)
+    * Check employee qualifications for assigned role
+  * Add domain events:
+    * `ShiftAssignedEto` - When employee is assigned to shift
+    * `ShiftSchedulePublishedEto` - When schedule is published
+    * `ShiftConflictDetectedEto` - When conflict is detected
+    * `EmployeeOvertimeRiskEto` - When employee approaches overtime threshold
+    * `TimeOffConflictDetectedEto` - When shift conflicts with approved time-off
+
+* `Story 2.3`: Create shift management application services.
+  * Add DTOs in `easyshifthq.Application.Contracts/Shifts`:
+    * `ShiftDto` - For shift data transfer
+    * `CreateUpdateShiftDto` - For creating/updating shifts
+    * `PublishScheduleDto` - For publishing schedule
+    * `GetShiftListDto` - For filtering shifts by date range, location, employee
+    * `ShiftScheduleDto` - For weekly schedule view
+    * `EmployeeAvailabilityDto` - For employee availability including time-off periods
+    * `TimeOffPeriodDto` - For representing approved time-off requests
+  * Add interfaces in `easyshifthq.Application.Contracts/Shifts`:
+    * `IShiftAppService` with CRUD operations, publish, and bulk operations
+    * `IShiftTemplateAppService` for managing schedule templates
+    * Add methods to retrieve availability and time-off:
+      * `GetEmployeeAvailabilityAsync(Guid employeeId, DateTime startDate, DateTime endDate)`
+      * `GetTimeOffPeriodsAsync(DateTime startDate, DateTime endDate, Guid? locationId = null)`
+  * Implement services in `easyshifthq.Application/Shifts`:
+    * `ShiftAppService` with methods for CRUD, publish, bulk operations
+    * `ShiftTemplateAppService` for template functionality
+    * Implement validation against time-off periods before creating or updating shifts
+    * Add caching for frequently accessed time-off data to improve performance
+  * Add permissions in `easyshifthqPermissionDefinitionProvider.cs`:
+    * `EasyShiftHQ.Shifts` group with Create, Edit, Delete, Publish permissions
+
+* `Story 2.4`: Build schedule editor UI and components.
+  * Create Razor Pages in `easyshifthq.Web/Pages/Shifts`:
+    * `Index.cshtml` - Main schedule management page with:
+      * Location selector dropdown
+      * Week navigation controls
+      * Schedule grid with time slots and days
+      * Employee pool sidebar
+      * Visual indicators for time-off/unavailability patterns
+    * `ShiftModal.cshtml` - Modal for creating/editing shifts with:
+      * Role selection dropdown (populated from Role entities)
+      * Time picker components (formatted as HH:MM AM/PM)
+      * Date picker with day of week display
+      * Location dropdown (showing location name and code)
+      * Notes text area for additional information
+      * Create Shift and Cancel buttons
+    * `ShiftDetailsModal.cshtml` - Modal for viewing and editing existing shifts:
+      * Employee assignment dropdown with display of weekly hours
+      * Role selection dropdown (populated from Role entities)
+      * Time picker components (formatted as HH:MM AM/PM)
+      * Location selection
+      * Status selector (Draft, Published, Cancelled)
+      * Notes field for additional information
+      * Update Shift button
+      * Visual indicator showing employee's current weekly scheduled hours
+      * Warning if employee has time-off overlapping with shift
+    * `Templates.cshtml` - Page for managing schedule templates
+  * Create JavaScript modules in `easyshifthq.Web/Pages/Shifts`:
+    * `schedule-editor.js` - Main schedule management JavaScript
+    * `shift-modal.js` - Shift creation/edit modal handler:
+      * Form validation for required fields
+      * Time format handling (12-hour format display)
+      * Automatic conflict detection
+      * Time-off validation
+    * `shift-details.js` - Shift details modal handler:
+      * Handle employee assignment with conflict checking
+      * Update shift hours and recalculate weekly hours
+      * Validate against employee availability
+      * Display warnings for potential scheduling violations
+      * Prevent assignment during approved time-off periods
+    * `templates.js` - Template management functions
+  * Implement drag-and-drop functionality:
+    * Use ABP's bundling system to include a drag-drop library
+    * Enable dragging employees to time slots
+    * Allow moving/resizing shifts within the schedule
+    * Implement shift duplication via drag+Ctrl
+    * Enable clicking on existing shifts to open ShiftDetailsModal
+    * Disable dropping employees onto time slots that overlap with their approved time-off
+  * Add real-time validation feedback:
+    * Show visual indicators for conflicts
+    * Display warnings for overtime or compliance issues
+    * Add tooltips for shift details on hover
+    * Show employee weekly hours during shift assignment
+    * Highlight time-off periods with distinct visual styling (similar to Google Calendar OOO indicators)
+    * Display blocked time slots for employees on vacation/time-off
+
+* `Story 2.5`: Implement publishing workflow and templates.
+  * Create schedule publishing workflow:
+    * Add draft state for unpublished schedules
+    * Implement comprehensive validation before publishing
+    * Add confirmation dialog with validation summary
+    * Create notification system for published schedules
+  * Implement schedule templates:
+    * Allow saving current schedule as template
+    * Provide template selection and application
+    * Support partial template application (specific days/roles)
+  * Add bulk operations:
+    * Copy shifts from previous week
+    * Delete all shifts in selected range
+    * Reassign shifts between employees
+  * Create schedule views:
+    * By employee view
+    * By role/position view
+    * Print-friendly view
+
+* `Story 2.6`: Write integration tests and Playwright UI tests.
+  * Add unit tests in `easyshifthq.Domain.Tests/Shifts`:
+    * `ShiftManager_Tests` for domain logic validation
+    * `Shift_Tests` for entity validation
+  * Add integration tests in `easyshifthq.Application.Tests/Shifts`:
+    * `ShiftAppService_Tests` for CRUD operations
+    * `ShiftAppService_Validation_Tests` for validation logic
+    * `ShiftTemplateAppService_Tests` for template functionality
+  * Add UI tests with Playwright in `easyshifthq.Web.Tests`:
+    * Test drag-and-drop functionality
+    * Test shift creation and editing
+    * Test schedule publishing flow
+    * Test conflict detection and resolution
 
 ### 📦 Epic 3: Shift Trade Workflow
 
