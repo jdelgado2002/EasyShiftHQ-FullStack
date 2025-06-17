@@ -1,94 +1,72 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
-name: .NET
+name: Build and Test EasyShiftHQ
 
 on:
   push:
+    branches:
+      - master
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - 'PRDs/**'
       - 'LICENSE'
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'PRDs/**'
-      - 'LICENSE'
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install ABP CLI
+        run: dotnet tool install -g Volo.Abp.Cli
+        shell: bash
     
-    # Determine .NET version from global.json if it exists, otherwise use latest
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: |
-          6.0.x
-          7.0.x
-          8.0.x
-        
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        
-    - name: Install tools
-      run: |
-        dotnet nuget add source https://nuget.abp.io/v3/index.json -n "ABP Commercial"
-        dotnet tool update -g Microsoft.Web.LibraryManager.Cli
-        dotnet new install Volo.Abp.Cli.Templates
-        
-    - name: Cache NuGet packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.nuget/packages
-        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/common.props') }}
-        restore-keys: |
-          ${{ runner.os }}-nuget-
-          
-    - name: Cache npm packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-          
-    - name: Restore and bundle
-      run: |
-        # Find and restore solution
-        solution=$(find . -name "*.sln" -type f)
-        dotnet restore "$solution"
-        
-        # Find Web project directory and bundle
-        web_project=$(find . -name "*.Web.csproj" -type f)
-        if [ -n "$web_project" ]; then
-          web_dir=$(dirname "$web_project")
-          cd "$web_dir"
+      - name: Restore solution
+        run: |
+          dotnet restore easyshifthq/easyshifthq.sln
+          cd easyshifthq/src/easyshifthq.Web
           abp install-libs
-          if [ -f "package.json" ]; then
-            npm install
-            npm run build
-          fi
-        fi
-        
-    - name: Build
-      run: |
-        solution=$(find . -name "*.sln" -type f)
-        dotnet build "$solution" --configuration Release --no-restore
-      
-    - name: Test
-      run: |
-        test_projects=$(find . -name "*Tests.csproj" -type f)
-        if [ -n "$test_projects" ]; then
-          echo "$test_projects" | while read -r project; do
-            echo "Testing $project..."
-            dotnet test "$project" --configuration Release --no-build --verbosity normal
-          done
-        fi
+        shell: bash
+
+      - name: Build solution
+        run: dotnet build easyshifthq/easyshifthq.sln --configuration Release --no-restore
+        shell: bash
+
+      - name: Run DbMigrator
+        run: dotnet run
+        working-directory: ./easyshifthq/src/easyshifthq.DbMigrator
+        shell: bash
+
+      - name: Test solution
+        run: dotnet test easyshifthq/easyshifthq.sln --configuration Release --no-build
+        shell: bash
+
+      - name: Publish Web
+        run: dotnet publish -c Release -o ./publish
+        working-directory: ./easyshifthq/src/easyshifthq.Web
+        shell: bash
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: easyshifthq-webapp
+          path: ./easyshifthq/src/easyshifthq.Web/publish
