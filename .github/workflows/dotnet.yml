@@ -37,7 +37,8 @@ jobs:
           cache-dependency-path: '**/package-lock.json'
 
       - name: Install ABP CLI
-        run: cd easyshifthq
+        run: |
+          cd easyshifthq
           dotnet tool install -g Volo.Abp.Cli
         shell: bash
     
