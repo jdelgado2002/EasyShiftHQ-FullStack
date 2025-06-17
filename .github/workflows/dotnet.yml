@@ -1,0 +1,72 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: Build and Test EasyShiftHQ
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'PRDs/**'
+      - 'LICENSE'
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install ABP CLI
+        run: dotnet tool install -g Volo.Abp.Cli
+        shell: bash
+    
+      - name: Restore solution
+        run: |
+          dotnet restore easyshifthq/easyshifthq.sln
+          cd easyshifthq/src/easyshifthq.Web
+          abp install-libs
+        shell: bash
+
+      - name: Build solution
+        run: dotnet build easyshifthq/easyshifthq.sln --configuration Release --no-restore
+        shell: bash
+
+      - name: Run DbMigrator
+        run: dotnet run
+        working-directory: ./easyshifthq/src/easyshifthq.DbMigrator
+        shell: bash
+
+      - name: Test solution
+        run: dotnet test easyshifthq/easyshifthq.sln --configuration Release --no-build
+        shell: bash
+
+      - name: Publish Web
+        run: dotnet publish -c Release -o ./publish
+        working-directory: ./easyshifthq/src/easyshifthq.Web
+        shell: bash
+
+      - name: Upload Web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: easyshifthq-webapp
+          path: ./easyshifthq/src/easyshifthq.Web/publish
