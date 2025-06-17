@@ -5,24 +5,89 @@ name: .NET
 
 on:
   push:
-    branches: [ "master" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'PRDs/**'
+      - 'LICENSE'
   pull_request:
-    branches: [ "master" ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'PRDs/**'
+      - 'LICENSE'
 
 jobs:
-  build:
-
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+    
+    # Determine .NET version from global.json if it exists, otherwise use latest
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
-    - name: Restore dependencies
-      run: dotnet restore
+        dotnet-version: |
+          6.0.x
+          7.0.x
+          8.0.x
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Install ABP CLI and tools
+      run: |
+        dotnet tool install -g Volo.Abp.Cli
+        dotnet tool install -g Microsoft.Web.LibraryManager.Cli
+        
+    - name: Cache NuGet packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/common.props') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+          
+    - name: Cache npm packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+          
+    - name: Restore and bundle
+      run: |
+        # Find and restore solution
+        solution=$(find . -name "*.sln" -type f)
+        dotnet restore "$solution"
+        
+        # Find Web project directory and bundle
+        web_project=$(find . -name "*.Web.csproj" -type f)
+        if [ -n "$web_project" ]; then
+          web_dir=$(dirname "$web_project")
+          cd "$web_dir"
+          abp install-libs
+          if [ -f "package.json" ]; then
+            npm install
+            npm run build
+          fi
+        fi
+        
     - name: Build
-      run: dotnet build --no-restore
+      run: |
+        solution=$(find . -name "*.sln" -type f)
+        dotnet build "$solution" --configuration Release --no-restore
+      
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: |
+        test_projects=$(find . -name "*Tests.csproj" -type f)
+        if [ -n "$test_projects" ]; then
+          echo "$test_projects" | while read -r project; do
+            echo "Testing $project..."
+            dotnet test "$project" --configuration Release --no-build --verbosity normal
+          done
+        fi
