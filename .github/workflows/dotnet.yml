@@ -38,10 +38,11 @@ jobs:
       with:
         node-version: '20'
         
-    - name: Install ABP CLI and tools
+    - name: Install tools
       run: |
-        dotnet tool install -g Volo.Abp.Cli
-        dotnet tool install -g Microsoft.Web.LibraryManager.Cli
+        dotnet nuget add source https://nuget.abp.io/v3/index.json -n "ABP Commercial"
+        dotnet tool update -g Microsoft.Web.LibraryManager.Cli
+        dotnet new install Volo.Abp.Cli.Templates
         
     - name: Cache NuGet packages
       uses: actions/cache@v3
